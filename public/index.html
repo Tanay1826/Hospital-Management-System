@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediCare - Hospital Management System | DBMS Mini Project</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- TOP ANNOUNCEMENT / TEAM BANNER -->
+    <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-teal-700 text-white text-xs sm:text-sm py-2 px-4 shadow-sm flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-2 font-medium">
+            <span class="bg-blue-500/40 text-blue-100 px-2 py-0.5 rounded text-xs uppercase tracking-wider font-bold">DBMS Mini Project</span>
+            <span>Hospital Management System (SPIT / University DBMS Assignment)</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs sm:text-sm">
+            <span class="text-blue-100">Team:</span>
+            <span class="font-semibold text-white bg-white/20 px-2.5 py-0.5 rounded-full">Tanay Bhutada (Lead) - 2025300029</span>
+            <span class="text-white/80">|</span>
+            <span class="text-white/90">Hiten Bohra - 2025300030</span>
+            <span class="text-white/80">|</span>
+            <span class="text-white/90">Aayush Chaudhari - 2025300035</span>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                    <i data-lucide="cross" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl text-slate-900 tracking-tight flex items-center gap-2">
+                        MediCare <span class="text-blue-600 font-semibold text-sm bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">HMS v1.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Relational Database Management System</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons & Status -->
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('modal-book-appointment')" class="hidden sm:inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-all hover:shadow hover:scale-[1.02]">
+                    <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                    <span>Book Appointment</span>
+                </button>
+                <button onclick="openModal('modal-add-patient')" class="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-all hover:shadow hover:scale-[1.02]">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Add Patient</span>
+                </button>
+                <div class="flex items-center gap-2 bg-slate-100 py-1 px-3 rounded-lg border border-slate-200 text-xs">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="font-medium text-slate-700">Database: Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAVIGATION BAR -->
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto border-t border-slate-100 flex gap-1 py-1 no-scrollbar text-xs font-medium">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-tab active">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('patients')" id="nav-patients" class="nav-tab">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span>Patients</span>
+            </button>
+            <button onclick="switchTab('doctors')" id="nav-doctors" class="nav-tab">
+                <i data-lucide="stethoscope" class="w-4 h-4"></i>
+                <span>Doctors & Depts</span>
+            </button>
+            <button onclick="switchTab('appointments')" id="nav-appointments" class="nav-tab">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <span>Appointments</span>
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="nav-tab">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Medical History</span>
+            </button>
+            <button onclick="switchTab('pharmacy')" id="nav-pharmacy" class="nav-tab">
+                <i data-lucide="pill" class="w-4 h-4"></i>
+                <span>Pharmacy & Inventory</span>
+            </button>
+            <button onclick="switchTab('prescriptions')" id="nav-prescriptions" class="nav-tab">
+                <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+                <span>Prescriptions</span>
+            </button>
+            <button onclick="switchTab('billing')" id="nav-billing" class="nav-tab">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                <span>Billing & Invoices</span>
+            </button>
+            <button onclick="switchTab('viva-lab')" id="nav-viva-lab" class="nav-tab text-indigo-700 bg-indigo-50/70 border border-indigo-200">
+                <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                <span class="font-bold">DBMS Viva Lab & SQL Playground</span>
+            </button>
+            <button onclick="switchTab('docs')" id="nav-docs" class="nav-tab">
+                <i data-lucide="book-marked" class="w-4 h-4"></i>
+                <span>Documentation</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- MAIN BODY CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ============================================================= -->
+        <!-- TAB 1: DASHBOARD -->
+        <!-- ============================================================= -->
+        <div id="tab-dashboard" class="tab-content block space-y-6">
+            <!-- Welcome Header -->
+            <div class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10 max-w-2xl">
+                    <span class="text-blue-300 text-xs font-semibold tracking-wider uppercase">Hospital Relational Database System</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold mt-1 tracking-tight">Welcome to MediCare HMS Dashboard</h2>
+                    <p class="text-blue-100 text-sm mt-2 leading-relaxed">
+                        Complete relational workflow linking Patients, Doctors, Working Schedules, Appointments, Medical Histories, Prescriptions, and Billing with ACID Transaction Control.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                        <span class="bg-blue-600/60 backdrop-blur border border-blue-400/30 px-3 py-1 rounded-full">Unit 7: 3NF/BCNF Schema</span>
+                        <span class="bg-blue-600/60 backdrop-blur border border-blue-400/30 px-3 py-1 rounded-full">Unit 8: Advanced Joins & Subqueries</span>
+                        <span class="bg-blue-600/60 backdrop-blur border border-blue-400/30 px-3 py-1 rounded-full">Unit 9: Triggers & Views</span>
+                        <span class="bg-blue-600/60 backdrop-blur border border-blue-400/30 px-3 py-1 rounded-full">Unit 10: ACID Transactions</span>
+                    </div>
+                </div>
+                <div class="absolute right-0 bottom-0 opacity-10 translate-x-10 translate-y-10 pointer-events-none">
+                    <i data-lucide="activity" class="w-72 h-72"></i>
+                </div>
+            </div>
+
+            <!-- Stats Metric Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Total Patients</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="users" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-patients">--</div>
+                    <span class="text-[11px] text-emerald-600 font-medium mt-1">Registered in DB</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Total Doctors</span>
+                        <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="stethoscope" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-doctors">--</div>
+                    <span class="text-[11px] text-purple-600 font-medium mt-1">Across 7 Depts</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Appointments</span>
+                        <div class="p-2 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="calendar" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-appointments">--</div>
+                    <span class="text-[11px] text-amber-600 font-medium mt-1" id="stat-pending-appt">-- Scheduled</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Paid Revenue</span>
+                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="indian-rupee" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-revenue">₹--</div>
+                    <span class="text-[11px] text-emerald-600 font-medium mt-1">Transactions settled</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Pending Dues</span>
+                        <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="alert-circle" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-pending-bills">₹--</div>
+                    <span class="text-[11px] text-rose-500 font-medium mt-1">Awaiting payment</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-slate-500 mb-2">
+                        <span class="text-xs font-medium">Low Stock Meds</span>
+                        <div class="p-2 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="pill" class="w-4 h-4"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-800" id="stat-low-stock">--</div>
+                    <span class="text-[11px] text-orange-600 font-medium mt-1">&lt; 100 units</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Split View -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Appointments Table (2 cols) -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calendar-clock" class="w-4 h-4 text-blue-600"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">Today & Upcoming Appointments</h3>
+                        </div>
+                        <button onclick="switchTab('appointments')" class="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                            View All <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3">Patient</th>
+                                    <th class="p-3">Doctor</th>
+                                    <th class="p-3">Date & Time</th>
+                                    <th class="p-3">Type</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-appointments" class="divide-y divide-slate-100">
+                                <tr><td colspan="6" class="p-6 text-center text-slate-400">Loading appointments...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Database Activity & Triggers Feed (1 col) -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="terminal" class="w-4 h-4 text-indigo-600"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">DBMS Audit Log (Live Triggers)</h3>
+                        </div>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono font-bold">SQL Triggers</span>
+                    </div>
+                    <div class="p-3 overflow-y-auto max-h-[360px] space-y-2.5 divide-y divide-slate-100" id="dashboard-audit-logs">
+                        <div class="p-4 text-center text-slate-400 text-xs">Loading audit events...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 2: PATIENTS -->
+        <!-- ============================================================= -->
+        <div id="tab-patients" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Patient Directory</h2>
+                    <p class="text-xs text-slate-500">Manage patient records, historical diagnoses, and medical histories</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="relative flex-1 sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="patient-search-input" oninput="filterPatients()" placeholder="Search by name, email, phone..." 
+                               class="w-full text-xs pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="openModal('modal-add-patient')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Add Patient
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Contact Details</th>
+                                <th class="p-3">DOB / Age</th>
+                                <th class="p-3">Gender</th>
+                                <th class="p-3">Address</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 3: DOCTORS & DEPARTMENTS -->
+        <!-- ============================================================= -->
+        <div id="tab-doctors" class="tab-content hidden space-y-6">
+            <!-- Departments Overview -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-blue-600"></i> Hospital Departments
+                    </h2>
+                    <span class="text-xs text-slate-500">Relational mapping: 1 Department → Many Doctors</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="departments-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Doctors Directory -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="stethoscope" class="w-4 h-4 text-purple-600"></i> Consulting Doctors & Working Schedules
+                    </h2>
+                    <button onclick="openModal('modal-add-doctor')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Register Doctor
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="doctors-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 4: APPOINTMENTS -->
+        <!-- ============================================================= -->
+        <div id="tab-appointments" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Appointment Management</h2>
+                    <p class="text-xs text-slate-500">Atomic Booking with Conflict Checking & Auto-Generated Invoices</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="appointment-status-filter" onchange="filterAppointments()" class="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <button onclick="openModal('modal-book-appointment')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i> New Appointment
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                            <tr>
+                                <th class="p-3">Appt ID</th>
+                                <th class="p-3">Patient</th>
+                                <th class="p-3">Doctor & Dept</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Time Slot</th>
+                                <th class="p-3">Consultation Type</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Invoice Amount</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 5: MEDICAL HISTORY -->
+        <!-- ============================================================= -->
+        <div id="tab-history" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Patient Medical Histories & Diagnoses</h2>
+                    <p class="text-xs text-slate-500">Connected patient journey: Previous Conditions, Diagnoses, Treatments & Clinical Notes</p>
+                </div>
+                <button onclick="openModal('modal-add-history')" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                    <i data-lucide="file-plus" class="w-4 h-4"></i> Add Medical Record
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="medical-history-cards">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 6: PHARMACY & INVENTORY -->
+        <!-- ============================================================= -->
+        <div id="tab-pharmacy" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Pharmacy & Medication Inventory</h2>
+                    <p class="text-xs text-slate-500">Real-time Stock Tracking (Automated DB Trigger on Prescription)</p>
+                </div>
+                <button onclick="openModal('modal-add-medication')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Medication
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                            <tr>
+                                <th class="p-3">Med ID</th>
+                                <th class="p-3">Medicine Name</th>
+                                <th class="p-3">Type</th>
+                                <th class="p-3">Unit / Packaging</th>
+                                <th class="p-3">Price (₹)</th>
+                                <th class="p-3">Available Stock</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Quick Restock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medications-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 7: PRESCRIPTIONS -->
+        <!-- ============================================================= -->
+        <div id="tab-prescriptions" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Prescription Registry (M:N Prescribes Entity)</h2>
+                    <p class="text-xs text-slate-500">Connecting Doctor, Medication, and Patient Consultation with Dosage & Frequency</p>
+                </div>
+                <button onclick="openModal('modal-add-prescription')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Write New Prescription
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Patient</th>
+                                <th class="p-3">Doctor</th>
+                                <th class="p-3">Medicine & Type</th>
+                                <th class="p-3">Dosage & Frequency</th>
+                                <th class="p-3">Duration</th>
+                                <th class="p-3">Qty</th>
+                                <th class="p-3">Instructions</th>
+                                <th class="p-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prescriptions-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 8: BILLING & INVOICES -->
+        <!-- ============================================================= -->
+        <div id="tab-billing" class="tab-content hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Billing & Payment Processing</h2>
+                    <p class="text-xs text-slate-500">Invoices, payment modes (UPI/Card/Cash/Insurance), and Transaction Status</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-600">Filters:</span>
+                    <button onclick="filterBilling('ALL')" class="text-xs px-2.5 py-1 bg-slate-100 rounded-lg hover:bg-slate-200 font-medium">All</button>
+                    <button onclick="filterBilling('Pending')" class="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg font-medium">Pending</button>
+                    <button onclick="filterBilling('Paid')" class="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-medium">Paid</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                            <tr>
+                                <th class="p-3">Bill ID</th>
+                                <th class="p-3">Patient</th>
+                                <th class="p-3">Doctor</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Total Amount</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Payment Mode</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 9: DBMS VIVA LAB & SQL PLAYGROUND (100/100 Marks Center) -->
+        <!-- ============================================================= -->
+        <div id="tab-viva-lab" class="tab-content hidden space-y-6">
+            <!-- Viva Header -->
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-blue-900 rounded-2xl p-6 text-white shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                            <i data-lucide="award" class="w-4 h-4"></i> DBMS Mini Project Evaluation Suite
+                        </div>
+                        <h2 class="text-2xl font-black mt-1">Units 7, 8, 9, 10 Interactive Live Demonstrator</h2>
+                        <p class="text-xs text-indigo-200 mt-1 max-w-2xl">
+                            Designed for live viva demonstration to university professors: Execute multi-table JOINs, Nested Subqueries, Stored Procedures, Live Triggers, and ACID Transactions (COMMIT / ROLLBACK).
+                        </p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-xl text-xs space-y-1">
+                        <div class="font-bold text-white">Group 7 Presentation:</div>
+                        <div class="text-indigo-100">Tanay Bhutada (Lead) • Hiten Bohra • Aayush Chaudhari</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UNIT 10: TRANSACTION MANAGEMENT (COMMIT vs ROLLBACK Simulator) -->
+            <div class="bg-white p-5 rounded-xl border-2 border-indigo-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded uppercase">Unit 10</span>
+                        <h3 class="font-bold text-slate-900 text-sm">ACID Transaction Management: COMMIT, ROLLBACK & SAVEPOINT</h3>
+                    </div>
+                    <span class="text-xs text-slate-500">Atomic Inventory Purchase Simulation</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3 text-xs">
+                        <p class="text-slate-600 leading-relaxed">
+                            Simulate an atomic multi-step database transaction: check stock, deduct inventory, and write audit log. Test both successful <strong class="text-emerald-700">COMMIT</strong> and an artificial crash triggering <strong class="text-rose-700">ROLLBACK</strong>.
+                        </p>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <button onclick="runTransactionDemo('simulate_success')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02]">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Run Transaction (COMMIT)
+                            </button>
+                            <button onclick="runTransactionDemo('simulate_failure')" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02]">
+                                <i data-lucide="x-circle" class="w-4 h-4"></i> Simulate Crash (ROLLBACK)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Execution Terminal Log -->
+                    <div class="bg-slate-900 text-emerald-400 p-3.5 rounded-lg font-mono text-[11px] overflow-y-auto max-h-48 border border-slate-800 shadow-inner" id="transaction-log-container">
+                        <div class="text-slate-500">// Transaction simulator ready. Click COMMIT or ROLLBACK above...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UNIT 8: PRE-BUILT ADVANCED SQL QUERIES -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-blue-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded uppercase">Unit 8</span>
+                        <h3 class="font-bold text-slate-900 text-sm">Viva Special: 1-Click Advanced SQL Query Suite</h3>
+                    </div>
+                    <span class="text-xs text-slate-500">Joins, Group By, Having, Subqueries</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs" id="viva-query-buttons">
+                    <!-- Populated dynamically with 1-click execution buttons -->
+                </div>
+            </div>
+
+            <!-- LIVE SQL PLAYGROUND RUNNER -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <i data-lucide="terminal-square" class="w-4 h-4 text-blue-600"></i> Interactive SQL Playground
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetDefaultQuery()" class="text-xs text-slate-500 hover:text-slate-700 underline">Reset Example</button>
+                        <button onclick="executeCustomSQL()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Execute SQL
+                        </button>
+                    </div>
+                </div>
+
+                <textarea id="custom-sql-input" rows="4" class="w-full font-mono text-xs bg-slate-900 text-slate-100 p-3.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" spellcheck="false">SELECT 
+    p.name AS Patient_Name,
+    d.name AS Doctor_Name,
+    dept.department_name AS Department,
+    a.appointment_date,
+    b.total_amount AS Bill_Amount,
+    b.payment_status
+FROM appointments a
+JOIN patients p ON a.patient_id = p.patient_id
+JOIN doctors d ON a.doctor_id = d.doctor_id
+JOIN departments dept ON d.department_id = dept.department_id
+JOIN billing b ON a.appointment_id = b.appointment_id
+ORDER BY a.appointment_date DESC;</textarea>
+
+                <!-- Query Result Table -->
+                <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
+                    <div class="p-2.5 bg-slate-100 border-b border-slate-200 flex justify-between items-center text-xs text-slate-600">
+                        <span id="query-meta-info" class="font-medium">Ready to execute query...</span>
+                        <span id="query-time" class="font-mono text-emerald-600 font-bold"></span>
+                    </div>
+                    <div class="overflow-x-auto max-h-72">
+                        <table class="w-full text-left text-xs bg-white">
+                            <thead id="query-result-head" class="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold sticky top-0">
+                                <tr><th class="p-2.5">Output will display here</th></tr>
+                            </thead>
+                            <tbody id="query-result-body" class="divide-y divide-slate-100 font-mono text-[11px]">
+                                <tr><td class="p-4 text-slate-400 text-center font-sans">Click 'Execute SQL' or one of the Viva Query buttons above.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 10: DOCUMENTATION & ER DIAGRAM -->
+        <!-- ============================================================= -->
+        <div id="tab-docs" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+                <!-- Group Info Header -->
+                <div class="border-b border-slate-200 pb-4">
+                    <h2 class="text-xl font-black text-slate-900">Hospital Management System - Project Specifications</h2>
+                    <p class="text-xs text-slate-500 mt-1">DBMS Mini Project Assignment 7, 8, 9, 10 • Academic Year 2026</p>
+                    
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+                            <span class="text-blue-600 font-semibold uppercase text-[10px] tracking-wider block">Student 1 (Lead Developer)</span>
+                            <div class="font-bold text-slate-800 text-sm mt-0.5">Tanay Bhutada</div>
+                            <div class="text-slate-600 mt-0.5 font-mono">UID: 2025300029</div>
+                            <div class="text-slate-500 text-[11px]">GitHub: @Tanay1826</div>
+                        </div>
+                        <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs">
+                            <span class="text-purple-600 font-semibold uppercase text-[10px] tracking-wider block">Student 2 (Team Member)</span>
+                            <div class="font-bold text-slate-800 text-sm mt-0.5">Hiten Bohra</div>
+                            <div class="text-slate-600 mt-0.5 font-mono">UID: 2025300030</div>
+                            <div class="text-slate-500 text-[11px]">Database Architecture</div>
+                        </div>
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+                            <span class="text-emerald-600 font-semibold uppercase text-[10px] tracking-wider block">Student 3 (Team Member)</span>
+                            <div class="font-bold text-slate-800 text-sm mt-0.5">Aayush Chaudhari</div>
+                            <div class="text-slate-600 mt-0.5 font-mono">UID: 2025300035</div>
+                            <div class="text-slate-500 text-[11px]">Queries & Testing</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ER Diagram Structural Breakdown -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <i data-lucide="network" class="w-4 h-4 text-blue-600"></i> Entity-Relationship (ER) Architecture
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                            <div class="font-bold text-slate-800 text-sm">Identified Entities:</div>
+                            <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                                <li><strong>Patient:</strong> patient_id (PK), name, email (UQ), date_of_birth, gender, phone, address</li>
+                                <li><strong>Doctor:</strong> doctor_id (PK), name, email (UQ), phone, specialization, experience_years, department_id (FK)</li>
+                                <li><strong>Department:</strong> department_id (PK), department_name (UQ), location, floor</li>
+                                <li><strong>Appointment:</strong> appointment_id (PK), patient_id (FK), doctor_id (FK), date, start_time, end_time, status, consultation_type</li>
+                                <li><strong>MedicalHistory:</strong> history_id (PK), patient_id (FK), doctor_id (FK), record_date, conditions, diagnosis, treatment, notes</li>
+                                <li><strong>Schedule:</strong> schedule_id (PK), doctor_id (FK), day_of_week, start_time, end_time, break_start, break_end</li>
+                                <li><strong>Medication:</strong> medication_id (PK), medicine_name (UQ), type, unit, price, stock_quantity</li>
+                                <li><strong>Prescription:</strong> prescription_id (PK), appointment_id (FK), doctor_id (FK), medication_id (FK), dosage, frequency, duration, instructions, quantity</li>
+                                <li><strong>Billing:</strong> bill_id (PK), patient_id (FK), appointment_id (FK), bill_date, total_amount, payment_status, payment_mode</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                            <div class="font-bold text-slate-800 text-sm">Cardinality & Relationships:</div>
+                            <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                                <li><strong>Patient Books Appointment:</strong> 1 : N (One patient can book multiple appointments)</li>
+                                <li><strong>Doctor Assigned To Appointment:</strong> 1 : N (One doctor handles multiple appointments)</li>
+                                <li><strong>Patient Has MedicalHistory:</strong> 1 : N (One patient has a continuous timeline of health records)</li>
+                                <li><strong>Appointment Generates Billing:</strong> 1 : 1 / 1 : N (Every appointment produces an invoice record)</li>
+                                <li><strong>Doctor Prescribes Medication:</strong> M : N (Resolved via associative entity <code>prescriptions</code>)</li>
+                                <li><strong>Doctor Has Schedule:</strong> 1 : N (Doctor has weekly shifts across various days)</li>
+                                <li><strong>Doctor Belongs To Department:</strong> N : 1 (Doctors belong to a single department)</li>
+                            </ul>
+                            <div class="mt-3 p-2.5 bg-blue-50 border border-blue-200 rounded text-blue-900 font-medium text-[11px]">
+                                <strong>Normalization:</strong> The schema satisfies 3NF and BCNF by ensuring every non-key attribute is non-transitively dependent directly on the Primary Key.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GitHub Collaboration Guide for Team -->
+                <div class="p-4 bg-slate-900 text-slate-100 rounded-xl space-y-3 text-xs">
+                    <div class="flex items-center justify-between">
+                        <div class="font-bold text-sm flex items-center gap-2 text-white">
+                            <i data-lucide="github" class="w-4 h-4"></i> GitHub Team Collaboration Instructions
+                        </div>
+                        <span class="text-emerald-400 font-mono text-[11px]">Git Repository Configured</span>
+                    </div>
+                    <p class="text-slate-300 leading-relaxed">
+                        To share this repository with <strong>Hiten Bohra</strong> and <strong>Aayush Chaudhari</strong> so they can clone, contribute, and collaborate:
+                    </p>
+                    <ol class="list-decimal pl-5 space-y-1.5 text-slate-300 font-mono text-[11px]">
+                        <li>Create a public or private repo named <strong>hospital-management-system</strong> on your GitHub account (<a href="https://github.com/new" target="_blank" class="text-blue-400 underline">github.com/new</a>).</li>
+                        <li>Push your local repository with: <br><code class="text-amber-300">git remote add origin https://github.com/Tanay1826/hospital-management-system.git</code><br><code class="text-amber-300">git branch -M main && git push -u origin main</code></li>
+                        <li>Go to <strong>Settings &gt; Collaborators &gt; Add people</strong> and invite your 2 teammates.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500">
+        <p>MediCare Hospital Management System • Built with Node.js, Express, Better-SQLite3 & Tailwind CSS</p>
+        <p class="mt-1 font-medium text-slate-700">Project Group 7: Tanay Bhutada (Lead) • Hiten Bohra • Aayush Chaudhari</p>
+    </footer>
+
+    <!-- ============================================================= -->
+    <!-- MODALS SECTION -->
+    <!-- ============================================================= -->
+
+    <!-- MODAL: ADD PATIENT -->
+    <div id="modal-add-patient" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4 text-emerald-600"></i> Register New Patient
+                </h3>
+                <button onclick="closeModal('modal-add-patient')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleCreatePatient(event)" class="space-y-3 text-xs mt-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="new-patient-name" required placeholder="e.g. Ramesh Kulkarni" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Email (Unique)</label>
+                        <input type="email" id="new-patient-email" required placeholder="ramesh@example.com" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                        <input type="tel" id="new-patient-phone" required placeholder="+91 98765 43210" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Date of Birth</label>
+                        <input type="date" id="new-patient-dob" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Gender</label>
+                        <select id="new-patient-gender" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Residential Address</label>
+                    <textarea id="new-patient-address" required rows="2" placeholder="Street, City, Pincode" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-add-patient')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg font-semibold">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BOOK APPOINTMENT -->
+    <div id="modal-book-appointment" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="calendar-plus" class="w-4 h-4 text-blue-600"></i> Book Appointment (Atomic Transaction)
+                </h3>
+                <button onclick="closeModal('modal-book-appointment')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleBookAppointment(event)" class="space-y-3 text-xs mt-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Select Patient</label>
+                    <select id="appt-patient-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">-- Choose Patient --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Select Doctor</label>
+                    <select id="appt-doctor-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">-- Choose Doctor --</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Date</label>
+                        <input type="date" id="appt-date" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Start Time</label>
+                        <input type="time" id="appt-start" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">End Time</label>
+                        <input type="time" id="appt-end" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Consultation Type</label>
+                        <select id="appt-type" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="In-Person">In-Person</option>
+                            <option value="Online/Telehealth">Online/Telehealth</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="Emergency">Emergency</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Consultation Fee (₹)</label>
+                        <input type="number" id="appt-fee" required value="600" min="0" step="50" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="p-2.5 bg-blue-50 border border-blue-200 rounded text-blue-800 text-[11px]">
+                    <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1"></i> Submitting books the appointment slot and atomically creates an invoice in the <code>billing</code> table.
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-book-appointment')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD MEDICAL HISTORY -->
+    <div id="modal-add-history" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="file-plus" class="w-4 h-4 text-teal-600"></i> Record Medical Diagnosis
+                </h3>
+                <button onclick="closeModal('modal-add-history')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleCreateHistory(event)" class="space-y-3 text-xs mt-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Patient</label>
+                        <select id="history-patient-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Doctor</label>
+                        <select id="history-doctor-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Date</label>
+                        <input type="date" id="history-date" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Pre-existing Conditions</label>
+                        <input type="text" id="history-conditions" required placeholder="e.g. Asthma, Hypertension" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Diagnosis</label>
+                    <input type="text" id="history-diagnosis" required placeholder="e.g. Acute bronchitis" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Treatment Plan</label>
+                    <input type="text" id="history-treatment" required placeholder="e.g. Inhaler therapy, 5-day antibiotic course" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Doctor Notes & Observations</label>
+                    <textarea id="history-notes" rows="2" placeholder="Additional observations, dietary restrictions, follow-up date" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-add-history')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg font-semibold">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD PRESCRIPTION -->
+    <div id="modal-add-prescription" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="file-plus-2" class="w-4 h-4 text-blue-600"></i> Prescribe Medication (Triggers Auto Stock Deduction)
+                </h3>
+                <button onclick="closeModal('modal-add-prescription')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleCreatePrescription(event)" class="space-y-3 text-xs mt-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Appointment</label>
+                    <select id="presc-appt-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Doctor</label>
+                        <select id="presc-doctor-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Medication</label>
+                        <select id="presc-med-select" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Dosage</label>
+                        <input type="text" id="presc-dosage" required placeholder="e.g. 500mg / 1 tab" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Frequency</label>
+                        <input type="text" id="presc-freq" required placeholder="e.g. Twice daily" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Duration</label>
+                        <input type="text" id="presc-duration" required placeholder="e.g. 7 days" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Quantity (Units)</label>
+                        <input type="number" id="presc-qty" required value="1" min="1" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Prescription Date</label>
+                        <input type="date" id="presc-date" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Instructions for Patient</label>
+                    <textarea id="presc-instructions" rows="2" placeholder="Take with warm water after meals" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="p-2.5 bg-amber-50 border border-amber-200 rounded text-amber-800 text-[11px]">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 inline mr-1"></i> <strong>Trigger Execution:</strong> Saving this form invokes <code>trg_reduce_medicine_stock</code> to deduct available units automatically.
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-add-prescription')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold">Issue Prescription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD MEDICATION -->
+    <div id="modal-add-medication" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="pill" class="w-4 h-4 text-indigo-600"></i> Add New Medication
+                </h3>
+                <button onclick="closeModal('modal-add-medication')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleCreateMedication(event)" class="space-y-3 text-xs mt-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Medicine Name</label>
+                    <input type="text" id="new-med-name" required placeholder="e.g. Azithromycin 500mg" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Form / Type</label>
+                        <select id="new-med-type" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="Tablet">Tablet</option>
+                            <option value="Syrup">Syrup</option>
+                            <option value="Injection">Injection</option>
+                            <option value="Capsule">Capsule</option>
+                            <option value="Ointment">Ointment</option>
+                            <option value="Drops">Drops</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Unit / Packaging</label>
+                        <input type="text" id="new-med-unit" required placeholder="e.g. 10 tablets / 100ml bottle" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Price per Unit (₹)</label>
+                        <input type="number" id="new-med-price" required min="0" step="0.5" placeholder="85.00" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Initial Stock Quantity</label>
+                        <input type="number" id="new-med-stock" required min="0" placeholder="100" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-add-medication')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg font-semibold">Save Medication</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD DOCTOR -->
+    <div id="modal-add-doctor" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="user-check" class="w-4 h-4 text-purple-600"></i> Register Consulting Doctor
+                </h3>
+                <button onclick="closeModal('modal-add-doctor')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleCreateDoctor(event)" class="space-y-3 text-xs mt-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Doctor Full Name</label>
+                    <input type="text" id="new-doc-name" required placeholder="Dr. Aarav Mehta" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Email</label>
+                        <input type="email" id="new-doc-email" required placeholder="aarav.mehta@medicare.com" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Phone</label>
+                        <input type="tel" id="new-doc-phone" required placeholder="+91 98200 12345" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Department</label>
+                        <select id="new-doc-dept" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Experience (Years)</label>
+                        <input type="number" id="new-doc-exp" required min="0" placeholder="10" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Specialization</label>
+                    <input type="text" id="new-doc-spec" required placeholder="e.g. Pediatric Cardiology, Spine Surgery" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-add-doctor')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded-lg font-semibold">Save Doctor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PAY INVOICE -->
+    <div id="modal-pay-bill" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-emerald-600"></i> Settle Invoice (ACID Transaction)
+                </h3>
+                <button onclick="closeModal('modal-pay-bill')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handlePayBill(event)" class="space-y-3 text-xs mt-3">
+                <input type="hidden" id="pay-bill-id">
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                    <div class="flex justify-between text-slate-600"><span>Invoice ID:</span> <span id="pay-display-id" class="font-mono font-bold"></span></div>
+                    <div class="flex justify-between text-slate-600"><span>Patient:</span> <span id="pay-display-patient" class="font-bold"></span></div>
+                    <div class="flex justify-between text-slate-800 text-sm font-bold pt-1 border-t border-slate-200">
+                        <span>Total Due:</span> <span id="pay-display-amount" class="text-emerald-700"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Select Payment Mode</label>
+                    <select id="pay-payment-mode" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="UPI">UPI (GooglePay / PhonePe / Paytm)</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="Cash">Cash at Counter</option>
+                        <option value="Insurance">Health Insurance TPA</option>
+                    </select>
+                </div>
+
+                <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 text-[11px]">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 inline mr-1"></i> Payment executes inside an atomic SQL transaction: Bill marked <strong>Paid</strong> and Appointment marked <strong>Completed</strong>.
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-pay-bill')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg font-semibold">Confirm Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PRINT INVOICE RECEIPT -->
+    <div id="modal-invoice-receipt" class="modal-backdrop hidden">
+        <div class="modal-card max-w-lg">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3 print:hidden">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4 text-blue-600"></i> Hospital Billing Receipt
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="bg-blue-600 text-white text-xs px-2.5 py-1 rounded font-semibold flex items-center gap-1">
+                        <i data-lucide="printer" class="w-3 h-3"></i> Print
+                    </button>
+                    <button onclick="closeModal('modal-invoice-receipt')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+            <div id="invoice-receipt-content" class="p-4 bg-white space-y-4 text-xs font-sans">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PATIENT 360° PROFILE & HISTORY -->
+    <div id="modal-patient-details" class="modal-backdrop hidden">
+        <div class="modal-card max-w-2xl">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="user" class="w-4 h-4 text-blue-600"></i> Patient 360° Comprehensive Profile
+                </h3>
+                <button onclick="closeModal('modal-patient-details')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div id="patient-details-content" class="mt-3 space-y-4 text-xs">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-box" class="bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 border border-slate-700">
+            <span id="toast-icon"></span>
+            <span id="toast-message">Notification</span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
