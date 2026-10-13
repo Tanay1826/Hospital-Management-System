@@ -15,23 +15,15 @@ const db = new Database(dbPath, { verbose: null });
 // Enable Foreign Key constraints in SQLite
 db.pragma('foreign_keys = ON');
 
-// Initialize database schema and seed data
+// Initialize database schema, views, triggers, and seed data from the single master SQL file
 function initializeDatabase() {
     try {
-        const schemaPath = path.join(__dirname, 'schema.sql');
-        const sampleDataPath = path.join(__dirname, 'sample_data.sql');
+        const sqlPath = path.join(__dirname, 'hospital_management_system.sql');
 
-        if (fs.existsSync(schemaPath)) {
-            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-            db.exec(schemaSql);
-        }
-
-        // Check if departments table has data, if not, load sample data
-        const deptCount = db.prepare('SELECT COUNT(*) as count FROM departments').get();
-        if (deptCount.count === 0 && fs.existsSync(sampleDataPath)) {
-            const seedSql = fs.readFileSync(sampleDataPath, 'utf8');
-            db.exec(seedSql);
-            console.log('✅ Sample data loaded successfully into hospital.db');
+        if (fs.existsSync(sqlPath)) {
+            const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+            db.exec(sqlContent);
+            console.log('✅ Database initialized successfully from hospital_management_system.sql');
         }
         console.log('✅ Hospital Management System Database connected & ready');
     } catch (err) {

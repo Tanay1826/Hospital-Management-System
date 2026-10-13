@@ -114,10 +114,10 @@ Visit **`http://localhost:3000`** in your browser. The embedded database automat
 ---
 
 ## 💻 For MySQL Workbench / phpMyAdmin Users
-If your university lab evaluator requires demonstrating queries inside MySQL:
-1. Open MySQL Workbench or phpMyAdmin.
-2. Execute [`database/mysql_schema.sql`](./database/mysql_schema.sql).
-3. Execute [`database/sample_data.sql`](./database/sample_data.sql).
+If your university lab evaluator requires demonstrating queries inside MySQL or any relational SQL tool:
+1. Open your database tool (MySQL Workbench, phpMyAdmin, DBeaver, or SQLite Studio).
+2. Execute the single all-in-one script [`database/hospital_management_system.sql`](./database/hospital_management_system.sql).
+   This script creates all tables, views, triggers, and automatically seeds initial sample data.
 
 ---
 
