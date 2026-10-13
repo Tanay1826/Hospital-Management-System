@@ -723,10 +723,10 @@ app.use((req, res, next) => {
     next();
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
     console.log(`🏥 MediCare Hospital Management System`);
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on http://0.0.0.0:${PORT} (local: http://localhost:${PORT})`);
     console.log(`👥 Team: Tanay Bhutada | Hiten Bohra | Aayush Chaudhari`);
     console.log(`=======================================================`);
 });

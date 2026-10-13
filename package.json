@@ -9,6 +9,9 @@
   },
   "keywords": ["hospital-management-system", "dbms", "sql", "sqlite", "mysql"],
   "author": "Tanay Bhutada, Hiten Bohra, Aayush Chaudhari",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

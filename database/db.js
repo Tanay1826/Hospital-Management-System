@@ -2,7 +2,14 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'hospital.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'hospital.db');
+
+// Ensure database directory exists if custom path is provided
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new Database(dbPath, { verbose: null });
 
 // Enable Foreign Key constraints in SQLite
