@@ -610,10 +610,43 @@
                         <span class="hidden sm:inline">Logout / Switch</span>
                     </button>
 
+                    <!-- Admin Only Header Buttons -->
+                    <button onclick="openModal('modal-add-doctor')" id="btn-add-doctor-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-purple-700 hover:bg-purple-800 transition shadow-sm hidden">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Doctor</span>
+                    </button>
+                    <button onclick="openModal('modal-add-medication')" id="btn-add-medication-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-purple-900 bg-purple-100 hover:bg-purple-200 border border-purple-300 transition hidden">
+                        <i data-lucide="pill" class="w-3.5 h-3.5 text-purple-700"></i>
+                        <span>Add Medicine</span>
+                    </button>
+
+                    <!-- Doctor Header Buttons -->
+                    <button onclick="openModal('modal-add-prescription')" id="btn-add-prescription-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm hidden">
+                        <i data-lucide="file-plus" class="w-3.5 h-3.5"></i>
+                        <span>Issue Rx</span>
+                    </button>
+                    <button onclick="openModal('modal-add-history')" id="btn-add-history-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-blue-900 bg-blue-100 hover:bg-blue-200 border border-blue-300 transition hidden">
+                        <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-blue-700"></i>
+                        <span>Add Case Note</span>
+                    </button>
+
+                    <!-- Patient Header Buttons -->
+                    <button onclick="switchTab('billing')" id="btn-pay-bills-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition hidden">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5 text-amber-700"></i>
+                        <span>My Invoices &amp; Pay</span>
+                    </button>
+                    <button onclick="switchTab('prescriptions')" id="btn-my-prescriptions-header" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-teal-900 bg-teal-100 hover:bg-teal-200 border border-teal-300 transition hidden">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-teal-700"></i>
+                        <span>My Prescriptions (Rx)</span>
+                    </button>
+
+                    <!-- Staff/Admin/Doctor Registration -->
                     <button onclick="openModal('modal-add-patient')" id="btn-register-patient-header" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5 text-teal-700"></i>
                         <span>Register Patient</span>
                     </button>
+
+                    <!-- Universal Booking Button -->
                     <button onclick="openModal('modal-book-appointment')" id="btn-book-appointment-header" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#148F77] hover:bg-[#107360] shadow-sm transition">
                         <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
                         <span>New Appointment</span>
@@ -621,16 +654,43 @@
                 </div>
             </header>
 
-            <!-- MOBILE NAVIGATION (Only visible on small screens) -->
-            <div class="md:hidden bg-[#0B192C] px-3 py-2 flex gap-1 overflow-x-auto text-xs text-slate-300 border-b border-slate-800">
-                <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded-md bg-white/10 text-white whitespace-nowrap">Overview</button>
-                <button onclick="switchTab('appointments')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Appointments</button>
-                <button onclick="switchTab('patients')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Patients</button>
-                <button onclick="switchTab('doctors')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Doctors</button>
-                <button onclick="switchTab('history')" class="px-3 py-1.5 rounded-md whitespace-nowrap">History</button>
-                <button onclick="switchTab('prescriptions')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Rx</button>
-                <button onclick="switchTab('pharmacy')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Pharmacy</button>
-                <button onclick="switchTab('billing')" class="px-3 py-1.5 rounded-md whitespace-nowrap">Billing</button>
+            <!-- UNIVERSAL HORIZONTAL MODULE NAVIGATION BAR (Visible on all devices & resolutions) -->
+            <div class="bg-[#0B192C] px-4 py-2.5 flex items-center gap-1.5 overflow-x-auto text-xs text-slate-300 border-b border-slate-800 shadow-inner">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-teal-400 shrink-0 mr-2 flex items-center gap-1">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i> Modules:
+                </span>
+                <button onclick="switchTab('dashboard')" id="topbar-nav-dashboard" class="topbar-nav-btn px-3 py-1.5 rounded-lg font-semibold bg-white/20 text-white whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/25">
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                    <span>Overview</span>
+                </button>
+                <button onclick="switchTab('appointments')" id="topbar-nav-appointments" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="calendar-check-2" class="w-3.5 h-3.5"></i>
+                    <span>Appointments</span>
+                </button>
+                <button onclick="switchTab('patients')" id="topbar-nav-patients" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                    <span>Patient Registry</span>
+                </button>
+                <button onclick="switchTab('doctors')" id="topbar-nav-doctors" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="stethoscope" class="w-3.5 h-3.5"></i>
+                    <span>Doctors &amp; Schedules</span>
+                </button>
+                <button onclick="switchTab('history')" id="topbar-nav-history" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                    <span>Medical History</span>
+                </button>
+                <button onclick="switchTab('prescriptions')" id="topbar-nav-prescriptions" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span>Prescriptions (Rx)</span>
+                </button>
+                <button onclick="switchTab('pharmacy')" id="topbar-nav-pharmacy" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="pill" class="w-3.5 h-3.5"></i>
+                    <span>Pharmacy Stock</span>
+                </button>
+                <button onclick="switchTab('billing')" id="topbar-nav-billing" class="topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white">
+                    <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                    <span>Billing &amp; Invoices</span>
+                </button>
             </div>
 
             <!-- SCROLLABLE WORKSPACE -->
@@ -716,6 +776,245 @@
                                     <div class="text-2xl font-bold text-slate-900 tabular-nums" id="stat-revenue">₹--</div>
                                     <span class="text-xs text-rose-600 font-medium" id="stat-pending-bills">₹-- Due</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- ===================================================== -->
+                        <!-- HOSPITAL OPERATIONS & CLINICAL FEATURES COMMAND CENTER -->
+                        <!-- ===================================================== -->
+                        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-[#148F77] animate-pulse"></span>
+                                        <h3 class="font-bold text-slate-900 text-base">Hospital Operations &amp; Clinical Features Command Center</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5">Direct 1-click access to all 8 core clinical and management modules configured in MySQL</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span id="role-modules-counter" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
+                                        8 Active Modules
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 8 Interactive Feature Module Cards Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                                <!-- 1. Appointments -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-teal-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="calendar-check-2" class="w-5 h-5"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">
+                                                ALL ROLES
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-teal-700 transition">Outpatient Appointments</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Book consultations, manage doctor time slots, update appointment status (Scheduled / Completed / Cancelled).
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('appointments')" class="text-xs font-bold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1">
+                                            <span>Open Module</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-book-appointment')" class="px-2.5 py-1 text-[11px] font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition shadow-sm">
+                                            + Book Now
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Patient Registry -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="users" class="w-5 h-5"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                                ALL ROLES
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">Patient Registry (UHID)</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Registered patient directory, demographic charts, age/gender, residential addresses, and unique UHID lookup.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('patients')" class="text-xs font-bold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1">
+                                            <span>Open Registry</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-add-patient')" id="hub-btn-reg-patient" class="px-2.5 py-1 text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-sm">
+                                            + Register
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Specialist Doctors & Schedules -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="stethoscope" class="w-5 h-5"></i>
+                                            </div>
+                                            <span id="hub-badge-doctor" class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                ADMIN &amp; DOCTOR
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-indigo-700 transition">Specialists &amp; Schedules</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Consulting specialist profiles, clinical departments, weekly OPD days, shift timings &amp; lunch breaks.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('doctors')" class="text-xs font-bold text-indigo-700 hover:text-indigo-800 inline-flex items-center gap-1">
+                                            <span>View Roster</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-add-doctor')" id="hub-btn-add-doctor" class="px-2.5 py-1 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-sm">
+                                            + Add Doctor
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Clinical Medical History -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                                            </div>
+                                            <span id="hub-badge-history" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                CLINICAL CARE
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition">Electronic Medical History</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Longitudinal electronic case records, clinical diagnoses, chronic illness tracking &amp; doctor treatment notes.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('history')" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+                                            <span>View Records</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-add-history')" id="hub-btn-add-history" class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-sm">
+                                            + New Case
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Prescriptions (Rx) -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="file-text" class="w-5 h-5"></i>
+                                            </div>
+                                            <span id="hub-badge-prescriptions" class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                                RX SYSTEM
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-purple-700 transition">Prescriptions (℞)</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Digital drug prescriptions linked to OPD appointments, exact dosages, consumption frequency &amp; durations.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('prescriptions')" class="text-xs font-bold text-purple-700 hover:text-purple-800 inline-flex items-center gap-1">
+                                            <span>View Rx Logs</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-add-prescription')" id="hub-btn-add-prescription" class="px-2.5 py-1 text-[11px] font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition shadow-sm">
+                                            + Issue Rx
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 6. Pharmacy Inventory -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-rose-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="pill" class="w-5 h-5"></i>
+                                            </div>
+                                            <span id="hub-badge-pharmacy" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                                ADMIN / PHARMACY
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-rose-700 transition">Pharmacy &amp; Medicines</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Formulary stock quantities, real-time availability, unit prices, low-stock alerts &amp; inventory replenishment.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('pharmacy')" class="text-xs font-bold text-rose-700 hover:text-rose-800 inline-flex items-center gap-1">
+                                            <span>Check Stock</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openModal('modal-add-medication')" id="hub-btn-add-medication" class="px-2.5 py-1 text-[11px] font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition shadow-sm">
+                                            + Restock
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 7. Billing & Invoices -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="receipt" class="w-5 h-5"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                                REVENUE / PAY
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-amber-700 transition">Billing &amp; Tax Invoices</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Patient invoices, consultation fees, online bill payment, pending dues &amp; official printable tax receipts.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('billing')" class="text-xs font-bold text-amber-700 hover:text-amber-800 inline-flex items-center gap-1">
+                                            <span>Manage Bills</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="switchTab('billing')" class="px-2.5 py-1 text-[11px] font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition shadow-sm">
+                                            View Invoices
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 8. Hospital Departments & Building Wings -->
+                                <div class="p-4 rounded-xl border border-slate-200 hover:border-cyan-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-800 flex items-center justify-center font-bold">
+                                                <i data-lucide="building-2" class="w-5 h-5"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                                7 DEPARTMENTS
+                                            </span>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition">Departments &amp; Wings</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Cardiology, Neurology, Pediatrics, Orthopedics, General Medicine, Dermatology, Radiology wing directory.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <button onclick="switchTab('doctors')" class="text-xs font-bold text-cyan-700 hover:text-cyan-800 inline-flex items-center gap-1">
+                                            <span>Floor Directory</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <span class="text-[11px] text-slate-400 font-medium">Floors 1 - 4</span>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 

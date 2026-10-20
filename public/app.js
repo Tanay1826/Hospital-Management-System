@@ -542,37 +542,92 @@ function applyRolePermissions() {
 
     // 1. Doctors management: Admin ONLY
     const btnAddDoctor = document.getElementById('btn-add-doctor');
-    if (btnAddDoctor) {
-        if (role === 'admin') btnAddDoctor.classList.remove('hidden');
-        else btnAddDoctor.classList.add('hidden');
+    const btnAddDoctorHeader = document.getElementById('btn-add-doctor-header');
+    const hubBtnAddDoctor = document.getElementById('hub-btn-add-doctor');
+    const hubBadgeDoctor = document.getElementById('hub-badge-doctor');
+    if (role === 'admin') {
+        if (btnAddDoctor) btnAddDoctor.classList.remove('hidden');
+        if (btnAddDoctorHeader) btnAddDoctorHeader.classList.remove('hidden');
+        if (hubBtnAddDoctor) hubBtnAddDoctor.classList.remove('hidden');
+        if (hubBadgeDoctor) hubBadgeDoctor.textContent = 'ADMIN CONTROL';
+    } else {
+        if (btnAddDoctor) btnAddDoctor.classList.add('hidden');
+        if (btnAddDoctorHeader) btnAddDoctorHeader.classList.add('hidden');
+        if (hubBtnAddDoctor) hubBtnAddDoctor.classList.add('hidden');
+        if (hubBadgeDoctor) hubBadgeDoctor.textContent = role === 'doctor' ? 'OPD SCHEDULE' : 'DIRECTORY';
     }
 
     // 2. Pharmacy Stock management: Admin ONLY
     const btnAddMedication = document.getElementById('btn-add-medication');
-    if (btnAddMedication) {
-        if (role === 'admin') btnAddMedication.classList.remove('hidden');
-        else btnAddMedication.classList.add('hidden');
+    const btnAddMedicationHeader = document.getElementById('btn-add-medication-header');
+    const hubBtnAddMedication = document.getElementById('hub-btn-add-medication');
+    const hubBadgePharmacy = document.getElementById('hub-badge-pharmacy');
+    if (role === 'admin') {
+        if (btnAddMedication) btnAddMedication.classList.remove('hidden');
+        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.remove('hidden');
+        if (hubBtnAddMedication) hubBtnAddMedication.classList.remove('hidden');
+        if (hubBadgePharmacy) hubBadgePharmacy.textContent = 'ADMIN CONTROL';
+    } else {
+        if (btnAddMedication) btnAddMedication.classList.add('hidden');
+        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.add('hidden');
+        if (hubBtnAddMedication) hubBtnAddMedication.classList.add('hidden');
+        if (hubBadgePharmacy) hubBadgePharmacy.textContent = role === 'doctor' ? 'VIEW STOCK' : 'FORMULARY';
     }
 
     // 3. Clinical Case Records (Diagnoses): Doctor & Admin ONLY (Patients CANNOT diagnose)
     const btnAddHistory = document.getElementById('btn-add-history');
-    if (btnAddHistory) {
-        if (role === 'patient') btnAddHistory.classList.add('hidden');
-        else btnAddHistory.classList.remove('hidden');
+    const btnAddHistoryHeader = document.getElementById('btn-add-history-header');
+    const hubBtnAddHistory = document.getElementById('hub-btn-add-history');
+    const hubBadgeHistory = document.getElementById('hub-badge-history');
+    if (role === 'patient') {
+        if (btnAddHistory) btnAddHistory.classList.add('hidden');
+        if (btnAddHistoryHeader) btnAddHistoryHeader.classList.add('hidden');
+        if (hubBtnAddHistory) hubBtnAddHistory.classList.add('hidden');
+        if (hubBadgeHistory) hubBadgeHistory.textContent = 'MY HISTORY';
+    } else {
+        if (btnAddHistory) btnAddHistory.classList.remove('hidden');
+        if (btnAddHistoryHeader) btnAddHistoryHeader.classList.remove('hidden');
+        if (hubBtnAddHistory) hubBtnAddHistory.classList.remove('hidden');
+        if (hubBadgeHistory) hubBadgeHistory.textContent = 'CLINICAL CARE';
     }
 
     // 4. Prescriptions (Rx): Doctor & Admin ONLY (Patients CANNOT prescribe)
     const btnAddPrescription = document.getElementById('btn-add-prescription');
-    if (btnAddPrescription) {
-        if (role === 'patient') btnAddPrescription.classList.add('hidden');
-        else btnAddPrescription.classList.remove('hidden');
+    const btnAddPrescriptionHeader = document.getElementById('btn-add-prescription-header');
+    const hubBtnAddPrescription = document.getElementById('hub-btn-add-prescription');
+    const hubBadgePrescriptions = document.getElementById('hub-badge-prescriptions');
+    if (role === 'patient') {
+        if (btnAddPrescription) btnAddPrescription.classList.add('hidden');
+        if (btnAddPrescriptionHeader) btnAddPrescriptionHeader.classList.add('hidden');
+        if (hubBtnAddPrescription) hubBtnAddPrescription.classList.add('hidden');
+        if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'MY RX (VIEW)';
+    } else {
+        if (btnAddPrescription) btnAddPrescription.classList.remove('hidden');
+        if (btnAddPrescriptionHeader) btnAddPrescriptionHeader.classList.remove('hidden');
+        if (hubBtnAddPrescription) hubBtnAddPrescription.classList.remove('hidden');
+        if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'ISSUE RX';
     }
 
-    // 5. Patient Registration from Header: Staff/Admin & Doctor only (not patient)
+    // 5. Patient Registration from Header & Hub: Staff/Admin & Doctor only (not patient)
     const btnRegPatientHeader = document.getElementById('btn-register-patient-header');
-    if (btnRegPatientHeader) {
-        if (role === 'patient') btnRegPatientHeader.classList.add('hidden');
-        else btnRegPatientHeader.classList.remove('hidden');
+    const hubBtnRegPatient = document.getElementById('hub-btn-reg-patient');
+    if (role === 'patient') {
+        if (btnRegPatientHeader) btnRegPatientHeader.classList.add('hidden');
+        if (hubBtnRegPatient) hubBtnRegPatient.classList.add('hidden');
+    } else {
+        if (btnRegPatientHeader) btnRegPatientHeader.classList.remove('hidden');
+        if (hubBtnRegPatient) hubBtnRegPatient.classList.remove('hidden');
+    }
+
+    // 6. Patient Header Shortcuts
+    const btnPayBillsHeader = document.getElementById('btn-pay-bills-header');
+    const btnMyPrescriptionsHeader = document.getElementById('btn-my-prescriptions-header');
+    if (role === 'patient') {
+        if (btnPayBillsHeader) btnPayBillsHeader.classList.remove('hidden');
+        if (btnMyPrescriptionsHeader) btnMyPrescriptionsHeader.classList.remove('hidden');
+    } else {
+        if (btnPayBillsHeader) btnPayBillsHeader.classList.add('hidden');
+        if (btnMyPrescriptionsHeader) btnMyPrescriptionsHeader.classList.add('hidden');
     }
 
     // Re-render UI grids & tables with active role permissions applied
@@ -790,6 +845,15 @@ function switchTab(tabId) {
 
     if (targetTab) targetTab.classList.remove('hidden');
     if (targetNav) targetNav.classList.add('active');
+
+    // Update top horizontal module navigation bar buttons
+    document.querySelectorAll('.topbar-nav-btn').forEach(btn => {
+        btn.className = 'topbar-nav-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5 hover:bg-white/10 text-slate-300 hover:text-white';
+    });
+    const activeTopbarBtn = document.getElementById(`topbar-nav-${tabId}`);
+    if (activeTopbarBtn) {
+        activeTopbarBtn.className = 'topbar-nav-btn px-3 py-1.5 rounded-lg font-semibold bg-white/20 text-white shadow-sm whitespace-nowrap transition flex items-center gap-1.5';
+    }
 
     const headerMeta = PAGE_HEADERS[tabId];
     if (headerMeta) {
