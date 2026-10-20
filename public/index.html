@@ -272,8 +272,8 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone *</label>
-                                    <input type="tel" id="reg-doc-phone" required placeholder="+91 98765 43210" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone (10 Digits) *</label>
+                                    <input type="tel" id="reg-doc-phone" required pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit number (e.g. 9820012345)" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-300 mb-1">Clinical Department *</label>
@@ -390,8 +390,8 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone *</label>
-                                    <input type="tel" id="reg-pat-phone" required placeholder="+91 98200 12345" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone (10 Digits) *</label>
+                                    <input type="tel" id="reg-pat-phone" required pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit number (e.g. 9820012345)" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-300 mb-1">Date of Birth *</label>
@@ -437,11 +437,11 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-300 mb-1">Admin Full Name *</label>
-                                    <input type="text" id="reg-adm-name" required placeholder="e.g. Tanay Bhutada" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                    <input type="text" id="reg-adm-name" required placeholder="e.g. Anurag Sharma" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-300 mb-1">Admin Username *</label>
-                                    <input type="text" id="reg-adm-username" required placeholder="admin_tanay" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                    <input type="text" id="reg-adm-username" required placeholder="admin_anurag" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
                                 </div>
                             </div>
 
@@ -598,7 +598,7 @@
                     <button onclick="openModal('modal-auth-login')" id="btn-user-profile" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 transition" title="Click to switch role or login">
                         <span id="header-user-avatar" class="w-6 h-6 rounded-full bg-[#148F77] text-white flex items-center justify-center font-bold text-[10px]">AD</span>
                         <div class="text-left leading-tight hidden lg:block">
-                            <div id="header-user-name" class="font-semibold text-slate-800 truncate max-w-[120px]">Dr. Tanay Bhutada</div>
+                            <div id="header-user-name" class="font-semibold text-slate-800 truncate max-w-[120px]">Anurag (Admin)</div>
                             <div id="header-user-role" class="text-[9px] text-teal-700 font-extrabold uppercase tracking-wider">ADMIN</div>
                         </div>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
@@ -717,7 +717,7 @@
                                         </span>
                                     </div>
                                     <h2 id="role-user-heading" class="text-base sm:text-lg font-bold text-white mt-1">
-                                        Welcome, Dr. Tanay Bhutada (Admin)
+                                        Welcome, Anurag (Admin)
                                     </h2>
                                     <p id="role-user-desc" class="text-xs text-slate-300 mt-0.5">
                                         You have full unrestricted administrative access across OPD, Doctors, Pharmacy, and Accounts.
@@ -802,7 +802,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                                 <!-- 1. Appointments -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-teal-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-appointments" class="p-4 rounded-xl border border-slate-200 hover:border-teal-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
@@ -829,14 +829,14 @@
                                 </div>
 
                                 <!-- 2. Patient Registry -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-patients" class="p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
                                                 <i data-lucide="users" class="w-5 h-5"></i>
                                             </div>
                                             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                                                ALL ROLES
+                                                DOCTOR &amp; ADMIN
                                             </span>
                                         </div>
                                         <h4 class="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">Patient Registry (UHID)</h4>
@@ -856,7 +856,7 @@
                                 </div>
 
                                 <!-- 3. Specialist Doctors & Schedules -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-doctors" class="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
@@ -883,7 +883,7 @@
                                 </div>
 
                                 <!-- 4. Clinical Medical History -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-history" class="p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
@@ -910,7 +910,7 @@
                                 </div>
 
                                 <!-- 5. Prescriptions (Rx) -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-prescriptions" class="p-4 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
@@ -937,14 +937,14 @@
                                 </div>
 
                                 <!-- 6. Pharmacy Inventory -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-rose-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-pharmacy" class="p-4 rounded-xl border border-slate-200 hover:border-rose-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
                                                 <i data-lucide="pill" class="w-5 h-5"></i>
                                             </div>
                                             <span id="hub-badge-pharmacy" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                                                ADMIN / PHARMACY
+                                                ADMIN ONLY
                                             </span>
                                         </div>
                                         <h4 class="font-bold text-slate-900 text-sm group-hover:text-rose-700 transition">Pharmacy &amp; Medicines</h4>
@@ -964,14 +964,14 @@
                                 </div>
 
                                 <!-- 7. Billing & Invoices -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-billing" class="p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
                                                 <i data-lucide="receipt" class="w-5 h-5"></i>
                                             </div>
                                             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                                                REVENUE / PAY
+                                                BILLING / INVOICES
                                             </span>
                                         </div>
                                         <h4 class="font-bold text-slate-900 text-sm group-hover:text-amber-700 transition">Billing &amp; Tax Invoices</h4>
@@ -991,7 +991,7 @@
                                 </div>
 
                                 <!-- 8. Hospital Departments & Building Wings -->
-                                <div class="p-4 rounded-xl border border-slate-200 hover:border-cyan-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
+                                <div id="hub-card-departments" class="p-4 rounded-xl border border-slate-200 hover:border-cyan-400 hover:shadow-md transition bg-gradient-to-br from-slate-50 to-white flex flex-col justify-between group">
                                     <div>
                                         <div class="flex items-center justify-between mb-3">
                                             <div class="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-800 flex items-center justify-center font-bold">
@@ -1342,8 +1342,8 @@
                         <input type="email" id="new-patient-email" required placeholder="ramesh@gmail.com" class="form-input">
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Contact Number</label>
-                        <input type="tel" id="new-patient-phone" required placeholder="+91 98201 12345" class="form-input">
+                        <label class="block font-semibold text-slate-700 mb-1">Contact Number (10 Digits)</label>
+                        <input type="tel" id="new-patient-phone" required pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit number (e.g. 9820112345)" class="form-input">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -1611,8 +1611,8 @@
                         <input type="email" id="new-doc-email" required placeholder="s.verma@medicare.com" class="form-input">
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
-                        <input type="tel" id="new-doc-phone" required placeholder="+91 98200 55443" class="form-input">
+                        <label class="block font-semibold text-slate-700 mb-1">Phone Number (10 Digits)</label>
+                        <input type="tel" id="new-doc-phone" required pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit number (e.g. 9820055443)" class="form-input">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -1659,8 +1659,8 @@
                         <input type="email" id="edit-doc-email" required placeholder="s.verma@medicare.com" class="form-input">
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
-                        <input type="tel" id="edit-doc-phone" required placeholder="+91 98200 55443" class="form-input">
+                        <label class="block font-semibold text-slate-700 mb-1">Phone Number (10 Digits)</label>
+                        <input type="tel" id="edit-doc-phone" required pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit number (e.g. 9820055443)" class="form-input">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">

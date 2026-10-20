@@ -289,11 +289,19 @@ INSERT INTO billing (bill_id, patient_id, appointment_id, bill_date, total_amoun
 
 -- 10. Users Data (Login Credentials & Role Assignment)
 INSERT INTO users (user_id, username, password, role, doctor_id, patient_id, full_name, email) VALUES
-(1, 'admin', 'admin123', 'admin', NULL, NULL, 'Dr. Tanay Bhutada (Admin)', 'admin@medicare.com'),
+(1, 'admin', 'admin123', 'admin', NULL, NULL, 'Anurag (Admin)', 'admin@medicare.com'),
 (2, 'dr.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
 (3, 'dr.priya', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
-(4, 'rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
-(5, 'sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com');
+(4, 'dr.banerjee', 'doctor123', 'doctor', 3, NULL, 'Dr. Amitav Banerjee', 'amitav.banerjee@medicare.com'),
+(5, 'dr.kulkarni', 'doctor123', 'doctor', 4, NULL, 'Dr. Sunita Kulkarni', 'sunita.kulkarni@medicare.com'),
+(6, 'dr.malhotra', 'doctor123', 'doctor', 5, NULL, 'Dr. Vikram Malhotra', 'vikram.malhotra@medicare.com'),
+(7, 'dr.nair', 'doctor123', 'doctor', 6, NULL, 'Dr. Ananya Nair', 'ananya.nair@medicare.com'),
+(8, 'rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
+(9, 'sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com'),
+(10, 'kabir.mehta', 'patient123', 'patient', NULL, 3, 'Kabir Mehta', 'kabir.mehta@example.com'),
+(11, 'meera.joshi', 'patient123', 'patient', NULL, 4, 'Meera Joshi', 'meera.joshi@example.com'),
+(12, 'arjun.reddy', 'patient123', 'patient', NULL, 5, 'Arjun Reddy', 'arjun.reddy@example.com'),
+(13, 'pooja.iyer', 'patient123', 'patient', NULL, 6, 'Pooja Iyer', 'pooja.iyer@example.com');
 
 -- =====================================================================
 -- SECTION 3: DATABASE VIEWS (UNIT 9)
@@ -354,6 +362,8 @@ JOIN doctors d ON a.doctor_id = d.doctor_id;
 CREATE OR REPLACE VIEW vw_ActivePrescriptions AS
 SELECT 
     pr.prescription_id,
+    a.patient_id,
+    pr.doctor_id,
     p.name AS patient_name,
     d.name AS doctor_name,
     m.medicine_name,

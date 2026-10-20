@@ -130,6 +130,11 @@ app.post('/api/auth/register-doctor', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Name, email, phone, specialization, and department are required' });
         }
 
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
+
         const exp = parseInt(experience_years, 10) || 0;
         const deptId = parseInt(department_id, 10);
         const startTime = start_time || '09:00:00';
@@ -143,7 +148,7 @@ app.post('/api/auth/register-doctor', async (req, res) => {
             const docInfo = await run(`
                 INSERT INTO doctors (name, email, phone, specialization, experience_years, department_id)
                 VALUES (?, ?, ?, ?, ?, ?)
-            `, [name, email, phone, specialization, exp, deptId]);
+            `, [name, email, cleanPhone, specialization, exp, deptId]);
             const doctorId = docInfo.lastInsertRowid;
 
             const scheduleDays = Array.isArray(days) && days.length > 0 
@@ -193,6 +198,11 @@ app.post('/api/auth/register-patient', async (req, res) => {
             return res.status(400).json({ success: false, error: 'All personal and demographic fields are required' });
         }
 
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
+
         const userPass = password || 'patient123';
         const userLogin = (username || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9._]/g, '');
 
@@ -200,7 +210,7 @@ app.post('/api/auth/register-patient', async (req, res) => {
             const patInfo = await run(`
                 INSERT INTO patients (name, email, date_of_birth, gender, phone, address)
                 VALUES (?, ?, ?, ?, ?, ?)
-            `, [name, email, date_of_birth, gender, phone, address]);
+            `, [name, email, date_of_birth, gender, cleanPhone, address]);
             const patientId = patInfo.lastInsertRowid;
 
             const userInfo = await run(`
@@ -363,10 +373,15 @@ app.post('/api/patients', async (req, res) => {
             return res.status(400).json({ success: false, error: 'All fields are required' });
         }
 
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
+
         const info = await run(`
             INSERT INTO patients (name, email, date_of_birth, gender, phone, address)
             VALUES (?, ?, ?, ?, ?, ?)
-        `, [name, email, date_of_birth, gender, phone, address]);
+        `, [name, email, date_of_birth, gender, cleanPhone, address]);
         const patientId = info.lastInsertRowid;
 
         // Auto-create login credentials for new patient
@@ -389,11 +404,16 @@ app.post('/api/patients', async (req, res) => {
 app.put('/api/patients/:id', async (req, res) => {
     try {
         const { name, email, date_of_birth, gender, phone, address } = req.body;
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
+
         await run(`
             UPDATE patients 
             SET name = ?, email = ?, date_of_birth = ?, gender = ?, phone = ?, address = ?
             WHERE patient_id = ?
-        `, [name, email, date_of_birth, gender, phone, address, req.params.id]);
+        `, [name, email, date_of_birth, gender, cleanPhone, address, req.params.id]);
 
         // Keep users table in sync if account exists
         try {
@@ -501,6 +521,10 @@ app.post('/api/doctors', requireRole(['admin']), async (req, res) => {
         if (!name || !email || !phone || !specialization || !department_id) {
             return res.status(400).json({ success: false, error: 'Name, email, phone, department, and specialization are required' });
         }
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
         const exp = parseInt(experience_years, 10) || 0;
         const deptId = parseInt(department_id, 10);
 
@@ -508,7 +532,7 @@ app.post('/api/doctors', requireRole(['admin']), async (req, res) => {
             const info = await run(`
                 INSERT INTO doctors (name, email, phone, specialization, experience_years, department_id)
                 VALUES (?, ?, ?, ?, ?, ?)
-            `, [name, email, phone, specialization, exp, deptId]);
+            `, [name, email, cleanPhone, specialization, exp, deptId]);
             const doctorId = info.lastInsertRowid;
 
             // Automatically create weekly OPD schedule slots for the new doctor
@@ -548,6 +572,10 @@ app.put('/api/doctors/:id', requireRole(['admin']), async (req, res) => {
         if (!name || !email || !phone || !specialization || !department_id) {
             return res.status(400).json({ success: false, error: 'All fields are required to update doctor' });
         }
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+        }
         const exp = parseInt(experience_years, 10) || 0;
         const deptId = parseInt(department_id, 10);
 
@@ -555,7 +583,7 @@ app.put('/api/doctors/:id', requireRole(['admin']), async (req, res) => {
             UPDATE doctors 
             SET name = ?, email = ?, phone = ?, specialization = ?, experience_years = ?, department_id = ?
             WHERE doctor_id = ?
-        `, [name, email, phone, specialization, exp, deptId, req.params.id]);
+        `, [name, email, cleanPhone, specialization, exp, deptId, req.params.id]);
 
         // Keep users table in sync if account exists
         try {

@@ -421,10 +421,16 @@ async function handleDoctorRegistration(e) {
         return showToast('Please select at least one OPD consultation day.', 'warning');
     }
 
+    const rawPhone = document.getElementById('reg-doc-phone').value.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+        return showToast('Contact phone must be exactly 10 digits.', 'error');
+    }
+
     const payload = {
         name: document.getElementById('reg-doc-name').value.trim(),
         email: document.getElementById('reg-doc-email').value.trim(),
-        phone: document.getElementById('reg-doc-phone').value.trim(),
+        phone: cleanPhone,
         department_id: document.getElementById('reg-doc-dept').value,
         specialization: document.getElementById('reg-doc-spec').value.trim(),
         experience_years: document.getElementById('reg-doc-exp').value,
@@ -464,10 +470,16 @@ async function handleDoctorRegistration(e) {
 
 async function handlePatientRegistration(e) {
     e.preventDefault();
+    const rawPhone = document.getElementById('reg-pat-phone').value.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+        return showToast('Contact phone must be exactly 10 digits.', 'error');
+    }
+
     const payload = {
         name: document.getElementById('reg-pat-name').value.trim(),
         email: document.getElementById('reg-pat-email').value.trim(),
-        phone: document.getElementById('reg-pat-phone').value.trim(),
+        phone: cleanPhone,
         date_of_birth: document.getElementById('reg-pat-dob').value,
         gender: document.getElementById('reg-pat-gender').value,
         address: document.getElementById('reg-pat-address').value.trim(),
@@ -540,7 +552,47 @@ function applyRolePermissions() {
     if (!currentUser) return;
     const role = (currentUser.role || 'admin').toLowerCase();
 
-    // 1. Doctors management: Admin ONLY
+    // 1. Patient Directory: HIDDEN from Patient (Only Doctor & Admin can view all patients)
+    const navPatients = document.getElementById('nav-patients');
+    const topbarNavPatients = document.getElementById('topbar-nav-patients');
+    const hubCardPatients = document.getElementById('hub-card-patients');
+    if (role === 'patient') {
+        if (navPatients) navPatients.classList.add('hidden');
+        if (topbarNavPatients) topbarNavPatients.classList.add('hidden');
+        if (hubCardPatients) hubCardPatients.classList.add('hidden');
+    } else {
+        if (navPatients) navPatients.classList.remove('hidden');
+        if (topbarNavPatients) topbarNavPatients.classList.remove('hidden');
+        if (hubCardPatients) hubCardPatients.classList.remove('hidden');
+    }
+
+    // 2. Pharmacy Stock: HIDDEN from BOTH Patient and Doctor (Admin ONLY)
+    const navPharmacy = document.getElementById('nav-pharmacy');
+    const topbarNavPharmacy = document.getElementById('topbar-nav-pharmacy');
+    const hubCardPharmacy = document.getElementById('hub-card-pharmacy');
+    const btnAddMedication = document.getElementById('btn-add-medication');
+    const btnAddMedicationHeader = document.getElementById('btn-add-medication-header');
+    const hubBtnAddMedication = document.getElementById('hub-btn-add-medication');
+    const hubBadgePharmacy = document.getElementById('hub-badge-pharmacy');
+    if (role === 'admin') {
+        if (navPharmacy) navPharmacy.classList.remove('hidden');
+        if (topbarNavPharmacy) topbarNavPharmacy.classList.remove('hidden');
+        if (hubCardPharmacy) hubCardPharmacy.classList.remove('hidden');
+        if (btnAddMedication) btnAddMedication.classList.remove('hidden');
+        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.remove('hidden');
+        if (hubBtnAddMedication) hubBtnAddMedication.classList.remove('hidden');
+        if (hubBadgePharmacy) hubBadgePharmacy.textContent = 'ADMIN ONLY';
+    } else {
+        if (navPharmacy) navPharmacy.classList.add('hidden');
+        if (topbarNavPharmacy) topbarNavPharmacy.classList.add('hidden');
+        if (hubCardPharmacy) hubCardPharmacy.classList.add('hidden');
+        if (btnAddMedication) btnAddMedication.classList.add('hidden');
+        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.add('hidden');
+        if (hubBtnAddMedication) hubBtnAddMedication.classList.add('hidden');
+        if (hubBadgePharmacy) hubBadgePharmacy.textContent = 'RESTRICTED';
+    }
+
+    // 3. Doctors management: Admin ONLY
     const btnAddDoctor = document.getElementById('btn-add-doctor');
     const btnAddDoctorHeader = document.getElementById('btn-add-doctor-header');
     const hubBtnAddDoctor = document.getElementById('hub-btn-add-doctor');
@@ -554,27 +606,10 @@ function applyRolePermissions() {
         if (btnAddDoctor) btnAddDoctor.classList.add('hidden');
         if (btnAddDoctorHeader) btnAddDoctorHeader.classList.add('hidden');
         if (hubBtnAddDoctor) hubBtnAddDoctor.classList.add('hidden');
-        if (hubBadgeDoctor) hubBadgeDoctor.textContent = role === 'doctor' ? 'OPD SCHEDULE' : 'DIRECTORY';
+        if (hubBadgeDoctor) hubBadgeDoctor.textContent = role === 'doctor' ? 'OPD SCHEDULE' : 'SPECIALISTS';
     }
 
-    // 2. Pharmacy Stock management: Admin ONLY
-    const btnAddMedication = document.getElementById('btn-add-medication');
-    const btnAddMedicationHeader = document.getElementById('btn-add-medication-header');
-    const hubBtnAddMedication = document.getElementById('hub-btn-add-medication');
-    const hubBadgePharmacy = document.getElementById('hub-badge-pharmacy');
-    if (role === 'admin') {
-        if (btnAddMedication) btnAddMedication.classList.remove('hidden');
-        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.remove('hidden');
-        if (hubBtnAddMedication) hubBtnAddMedication.classList.remove('hidden');
-        if (hubBadgePharmacy) hubBadgePharmacy.textContent = 'ADMIN CONTROL';
-    } else {
-        if (btnAddMedication) btnAddMedication.classList.add('hidden');
-        if (btnAddMedicationHeader) btnAddMedicationHeader.classList.add('hidden');
-        if (hubBtnAddMedication) hubBtnAddMedication.classList.add('hidden');
-        if (hubBadgePharmacy) hubBadgePharmacy.textContent = role === 'doctor' ? 'VIEW STOCK' : 'FORMULARY';
-    }
-
-    // 3. Clinical Case Records (Diagnoses): Doctor & Admin ONLY (Patients CANNOT diagnose)
+    // 4. Clinical Case Records (Diagnoses): Doctor & Admin ONLY (Patients CANNOT diagnose)
     const btnAddHistory = document.getElementById('btn-add-history');
     const btnAddHistoryHeader = document.getElementById('btn-add-history-header');
     const hubBtnAddHistory = document.getElementById('hub-btn-add-history');
@@ -591,7 +626,7 @@ function applyRolePermissions() {
         if (hubBadgeHistory) hubBadgeHistory.textContent = 'CLINICAL CARE';
     }
 
-    // 4. Prescriptions (Rx): Doctor & Admin ONLY (Patients CANNOT prescribe)
+    // 5. Prescriptions (Rx): Doctor & Admin ONLY (Patients CANNOT prescribe)
     const btnAddPrescription = document.getElementById('btn-add-prescription');
     const btnAddPrescriptionHeader = document.getElementById('btn-add-prescription-header');
     const hubBtnAddPrescription = document.getElementById('hub-btn-add-prescription');
@@ -608,7 +643,7 @@ function applyRolePermissions() {
         if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'ISSUE RX';
     }
 
-    // 5. Patient Registration from Header & Hub: Staff/Admin & Doctor only (not patient)
+    // 6. Patient Registration from Header & Hub: Staff/Admin & Doctor only (not patient)
     const btnRegPatientHeader = document.getElementById('btn-register-patient-header');
     const hubBtnRegPatient = document.getElementById('hub-btn-reg-patient');
     if (role === 'patient') {
@@ -619,7 +654,7 @@ function applyRolePermissions() {
         if (hubBtnRegPatient) hubBtnRegPatient.classList.remove('hidden');
     }
 
-    // 6. Patient Header Shortcuts
+    // 7. Patient Header Shortcuts
     const btnPayBillsHeader = document.getElementById('btn-pay-bills-header');
     const btnMyPrescriptionsHeader = document.getElementById('btn-my-prescriptions-header');
     if (role === 'patient') {
@@ -630,7 +665,19 @@ function applyRolePermissions() {
         if (btnMyPrescriptionsHeader) btnMyPrescriptionsHeader.classList.add('hidden');
     }
 
-    // 7. Appointment Scope Configuration (Doctors see their own patients by default)
+    // 8. Command Center Module Counter
+    const moduleCounter = document.getElementById('role-modules-counter');
+    if (moduleCounter) {
+        if (role === 'patient') {
+            moduleCounter.textContent = '6 Active Modules';
+        } else if (role === 'doctor') {
+            moduleCounter.textContent = '7 Active Modules';
+        } else {
+            moduleCounter.textContent = '8 Active Modules';
+        }
+    }
+
+    // 9. Appointment Scope Configuration (Doctors see their own patients by default)
     const apptScopeContainer = document.getElementById('appt-scope-container');
     const scopeBtnMy = document.getElementById('scope-appt-MY');
     const scopeBtnAll = document.getElementById('scope-appt-ALL');
@@ -663,6 +710,8 @@ function applyRolePermissions() {
     if (cachedPatients && cachedPatients.length > 0) renderPatients(cachedPatients);
     if (cachedMedications && cachedMedications.length > 0) renderMedicationsTable();
     if (cachedBilling && cachedBilling.length > 0) renderBilling(cachedBilling);
+    loadMedicalHistory();
+    loadPrescriptions();
 
     lucide.createIcons();
 }
@@ -864,6 +913,20 @@ function applyRoleFilters() {
 
 // Switch Sidebar Tab
 function switchTab(tabId) {
+    if (currentUser) {
+        const role = (currentUser.role || 'admin').toLowerCase();
+        if (role === 'patient' && tabId === 'patients') {
+            showToast('Patient Directory is restricted to Hospital Staff & Doctors', 'warning');
+            switchTab('dashboard');
+            return;
+        }
+        if ((role === 'patient' || role === 'doctor') && tabId === 'pharmacy') {
+            showToast('Pharmacy Inventory is restricted to Hospital Administration', 'warning');
+            switchTab('dashboard');
+            return;
+        }
+    }
+
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
 
@@ -1124,10 +1187,16 @@ function filterPatients() {
 
 async function handleCreatePatient(e) {
     e.preventDefault();
+    const rawPhone = document.getElementById('new-patient-phone').value.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+        return showToast('Contact phone must be exactly 10 digits.', 'error');
+    }
+
     const data = {
         name: document.getElementById('new-patient-name').value.trim(),
         email: document.getElementById('new-patient-email').value.trim(),
-        phone: document.getElementById('new-patient-phone').value.trim(),
+        phone: cleanPhone,
         date_of_birth: document.getElementById('new-patient-dob').value,
         gender: document.getElementById('new-patient-gender').value,
         address: document.getElementById('new-patient-address').value.trim()
@@ -1451,10 +1520,15 @@ async function handleCreateDoctor(e) {
     if (!currentUser || currentUser.role !== 'admin') {
         return showToast('Permission Denied: Only Admin can add doctors to hospital roster.', 'error');
     }
+    const rawPhone = document.getElementById('new-doc-phone').value.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+        return showToast('Phone number must be exactly 10 digits.', 'error');
+    }
     const data = {
         name: document.getElementById('new-doc-name').value.trim(),
         email: document.getElementById('new-doc-email').value.trim(),
-        phone: document.getElementById('new-doc-phone').value.trim(),
+        phone: cleanPhone,
         department_id: document.getElementById('new-doc-dept').value,
         experience_years: document.getElementById('new-doc-exp').value,
         specialization: document.getElementById('new-doc-spec').value.trim()
@@ -1513,10 +1587,15 @@ async function handleUpdateDoctor(e) {
         return showToast('Permission Denied: Only Admin can update doctor profiles.', 'error');
     }
     const id = document.getElementById('edit-doc-id').value;
+    const rawPhone = document.getElementById('edit-doc-phone').value.trim();
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+        return showToast('Phone number must be exactly 10 digits.', 'error');
+    }
     const data = {
         name: document.getElementById('edit-doc-name').value.trim(),
         email: document.getElementById('edit-doc-email').value.trim(),
-        phone: document.getElementById('edit-doc-phone').value.trim(),
+        phone: cleanPhone,
         department_id: document.getElementById('edit-doc-dept').value,
         experience_years: document.getElementById('edit-doc-exp').value,
         specialization: document.getElementById('edit-doc-spec').value.trim()
@@ -1828,12 +1907,21 @@ async function loadMedicalHistory() {
         const json = await res.json();
         if (json.success) {
             const container = document.getElementById('medical-history-cards');
-            if (json.data.length === 0) {
-                container.innerHTML = '<div class="p-8 text-slate-400 text-center col-span-2">No clinical case records documented yet.</div>';
+            let records = json.data || [];
+            if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+                const myPatId = Number(currentUser.patient_id);
+                records = records.filter(m => Number(m.patient_id) === myPatId);
+            }
+
+            if (records.length === 0) {
+                const emptyMsg = (currentUser && currentUser.role === 'patient')
+                    ? 'No clinical case history recorded for your profile yet.'
+                    : 'No clinical case records documented yet.';
+                container.innerHTML = `<div class="p-8 text-slate-400 text-center col-span-2">${emptyMsg}</div>`;
                 return;
             }
 
-            container.innerHTML = json.data.map(m => `
+            container.innerHTML = records.map(m => `
                 <div class="bg-white p-5 rounded-xl border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-3">
                     <div>
                         <div class="flex justify-between items-start border-b border-slate-100 pb-3">
@@ -2080,12 +2168,21 @@ async function loadPrescriptions() {
         const json = await res.json();
         if (json.success) {
             const tbody = document.getElementById('prescriptions-table-body');
-            if (json.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">No prescriptions issued yet.</td></tr>';
+            let records = json.data || [];
+            if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+                const myPatId = Number(currentUser.patient_id);
+                records = records.filter(pr => Number(pr.patient_id) === myPatId);
+            }
+
+            if (records.length === 0) {
+                const emptyMsg = (currentUser && currentUser.role === 'patient')
+                    ? 'No active prescriptions issued for your profile yet.'
+                    : 'No prescriptions issued yet.';
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400">${emptyMsg}</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = json.data.map(pr => `
+            tbody.innerHTML = records.map(pr => `
                 <tr class="hover:bg-slate-50/80 transition">
                     <td class="py-3.5 px-4 font-mono font-semibold text-teal-700">Rx-${200 + pr.prescription_id}</td>
                     <td class="py-3.5 px-4 font-bold text-slate-900">${pr.patient_name}</td>
@@ -2197,15 +2294,24 @@ async function loadBilling() {
 
 function renderBilling(bills) {
     const tbody = document.getElementById('billing-table-body');
-    if (bills.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">No invoices found.</td></tr>';
-        return;
-    }
-
     const isPatient = currentUser && currentUser.role === 'patient';
     const isDoctor = currentUser && currentUser.role === 'doctor';
 
-    tbody.innerHTML = bills.map(b => `
+    let displayBills = bills || [];
+    if (isPatient && currentUser.patient_id) {
+        const myPatId = Number(currentUser.patient_id);
+        displayBills = displayBills.filter(b => Number(b.patient_id) === myPatId);
+    }
+
+    if (displayBills.length === 0) {
+        const emptyMsg = isPatient
+            ? 'No billing invoices found for your account.'
+            : 'No invoices found.';
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400">${emptyMsg}</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = displayBills.map(b => `
         <tr class="hover:bg-slate-50/80 transition">
             <td class="py-3.5 px-4 font-mono font-semibold text-slate-500">INV-${1000 + b.bill_id}</td>
             <td class="py-3.5 px-4 font-bold text-slate-900">${b.patient_name}</td>
@@ -2238,10 +2344,15 @@ function renderBilling(bills) {
 }
 
 function filterBilling(status) {
+    let source = cachedBilling;
+    if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+        const myPatId = Number(currentUser.patient_id);
+        source = source.filter(b => Number(b.patient_id) === myPatId);
+    }
     if (status === 'ALL') {
-        renderBilling(cachedBilling);
+        renderBilling(source);
     } else {
-        renderBilling(cachedBilling.filter(b => b.payment_status === status));
+        renderBilling(source.filter(b => b.payment_status === status));
     }
 }
 
