@@ -172,6 +172,21 @@ CREATE TABLE audit_logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 11. Users Table (Authentication & Role-Based Access Control - RBAC)
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'doctor', 'patient')),
+    doctor_id INT NULL,
+    patient_id INT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_users_doctor FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL,
+    CONSTRAINT fk_users_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE SET NULL
+);
+
 -- =====================================================================
 -- SECTION 2: DML - SAMPLE DATA INSERTS
 -- =====================================================================
@@ -271,6 +286,14 @@ INSERT INTO billing (bill_id, patient_id, appointment_id, bill_date, total_amoun
 (5, 5, 5, '2026-10-11', 720.00, 'Paid', 'Credit Card'),
 (6, 6, 6, '2026-10-12', 885.00, 'Paid', 'Cash'),
 (7, 1, 7, '2026-10-08', 1230.00, 'Paid', 'Insurance');
+
+-- 10. Users Data (Login Credentials & Role Assignment)
+INSERT INTO users (user_id, username, password, role, doctor_id, patient_id, full_name, email) VALUES
+(1, 'admin', 'admin123', 'admin', NULL, NULL, 'Dr. Tanay Bhutada (Admin)', 'admin@medicare.com'),
+(2, 'dr.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
+(3, 'dr.priya', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
+(4, 'rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
+(5, 'sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com');
 
 -- =====================================================================
 -- SECTION 3: DATABASE VIEWS (UNIT 9)
@@ -412,6 +435,75 @@ BEGIN
             NEW.bill_id,
             CONCAT('Payment status changed from ', OLD.payment_status, ' to ', NEW.payment_status, ' via ', NEW.payment_mode)
         );
+    END IF;
+END//
+
+-- =====================================================================
+-- SECTION 4.5: STORED PROCEDURES (UNIT 9 & 10)
+-- =====================================================================
+
+-- Procedure 1: Atomic Appointment Booking with Pending Bill Generation
+CREATE PROCEDURE sp_BookAppointmentWithBilling(
+    IN p_patient_id INT,
+    IN p_doctor_id INT,
+    IN p_date DATE,
+    IN p_start TIME,
+    IN p_end TIME,
+    IN p_type VARCHAR(50),
+    IN p_consultation_fee DECIMAL(10,2),
+    OUT p_appointment_id INT,
+    OUT p_bill_id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+    
+    INSERT INTO appointments (patient_id, doctor_id, appointment_date, start_time, end_time, status, consultation_type)
+    VALUES (p_patient_id, p_doctor_id, p_date, p_start, p_end, 'Scheduled', p_type);
+
+    SET p_appointment_id = LAST_INSERT_ID();
+
+    INSERT INTO billing (patient_id, appointment_id, bill_date, total_amount, payment_status, payment_mode)
+    VALUES (p_patient_id, p_appointment_id, p_date, p_consultation_fee, 'Pending', 'Pending');
+
+    SET p_bill_id = LAST_INSERT_ID();
+
+    COMMIT;
+END//
+
+-- Procedure 2: Complete Appointment & Settle Billing
+CREATE PROCEDURE sp_SettleAppointmentBill(
+    IN p_bill_id INT,
+    IN p_payment_mode VARCHAR(50),
+    OUT p_result_message VARCHAR(100)
+)
+BEGIN
+    DECLARE v_appt_id INT;
+
+    START TRANSACTION;
+    SAVEPOINT before_settle;
+
+    SELECT appointment_id INTO v_appt_id FROM billing WHERE bill_id = p_bill_id;
+
+    IF v_appt_id IS NULL THEN
+        ROLLBACK TO SAVEPOINT before_settle;
+        SET p_result_message = 'Bill ID not found.';
+    ELSE
+        UPDATE billing 
+        SET payment_status = 'Paid', payment_mode = p_payment_mode 
+        WHERE bill_id = p_bill_id;
+
+        UPDATE appointments 
+        SET status = 'Completed' 
+        WHERE appointment_id = v_appt_id;
+
+        COMMIT;
+        SET p_result_message = 'Bill settled and appointment completed successfully.';
     END IF;
 END//
 

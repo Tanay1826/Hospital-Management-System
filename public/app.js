@@ -10,6 +10,24 @@ let cachedBilling = [];
 let cachedSchedules = [];
 let activeDeptFilter = 'ALL';
 
+// User Authentication & Role State
+// Using sessionStorage ensures that opening a fresh tab or reopening always starts at the Gatekeeper
+let currentUser = JSON.parse(sessionStorage.getItem('medicare_active_user')) || null;
+let cachedUsers = [];
+let activeAuthFilter = 'all';
+
+// Unified API Fetch with Role Header for RBAC enforcement
+function apiFetch(url, options = {}) {
+    const opts = { ...options };
+    opts.headers = { ...(options.headers || {}) };
+    if (!opts.headers['Content-Type'] && opts.body && typeof opts.body === 'string') {
+        opts.headers['Content-Type'] = 'application/json';
+    }
+    const role = (currentUser && currentUser.role) ? currentUser.role : 'patient';
+    opts.headers['x-user-role'] = role;
+    return fetch(url, opts);
+}
+
 const PAGE_HEADERS = {
     dashboard: {
         title: 'Hospital Overview',
@@ -47,15 +65,17 @@ const PAGE_HEADERS = {
 
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    loadDashboardData();
-    loadPatients();
+    checkAuthGatekeeper();
+    loadAuthUsers();
     loadDepartments();
     loadDoctors();
+    loadPatients();
     loadAppointments();
     loadMedicalHistory();
     loadMedications();
     loadPrescriptions();
     loadBilling();
+    loadDashboardData();
 });
 
 // Helper: Get 2-letter initials from name
@@ -64,6 +84,12 @@ function getInitials(name = '') {
     const parts = cleaned.split(/\s+/);
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Safe Currency Formatter (Handles strings, nulls, and numbers from MySQL DECIMAL)
+function formatCurrency(amount) {
+    const num = parseFloat(amount);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
 }
 
 // Toast Notification
@@ -97,6 +123,9 @@ function openModal(id) {
     if (el) {
         el.classList.remove('hidden');
         populateSelectDropdowns();
+        if (id === 'modal-auth-login') {
+            loadAuthUsers();
+        }
         lucide.createIcons();
     }
 }
@@ -111,6 +140,645 @@ window.addEventListener('click', (e) => {
         e.target.classList.add('hidden');
     }
 });
+
+// =====================================================================
+// AUTH & ROLE GATEKEEPER SYSTEM (Admin / Doctor / Patient)
+// =====================================================================
+
+function checkAuthGatekeeper() {
+    const activeSession = sessionStorage.getItem('medicare_active_user');
+    const gatekeeperEl = document.getElementById('auth-gatekeeper');
+    const mainAppEl = document.getElementById('main-app-container');
+
+    if (!activeSession) {
+        // Not logged in this session: Always show Gatekeeper landing first!
+        if (gatekeeperEl) gatekeeperEl.classList.remove('hidden');
+        if (mainAppEl) mainAppEl.classList.add('hidden');
+        populateGatekeeperPickers();
+    } else {
+        try {
+            currentUser = JSON.parse(activeSession);
+        } catch (_) {}
+        if (gatekeeperEl) gatekeeperEl.classList.add('hidden');
+        if (mainAppEl) mainAppEl.classList.remove('hidden');
+        renderCurrentUser();
+        applyRolePermissions();
+    }
+}
+
+let selectedGatekeeperRole = 'doctor';
+
+function showLoginGatekeeper() {
+    sessionStorage.removeItem('medicare_active_user');
+    currentUser = null;
+    const gatekeeperEl = document.getElementById('auth-gatekeeper');
+    const mainAppEl = document.getElementById('main-app-container');
+    const roleSelectView = document.getElementById('gk-role-selection-view');
+    const rolePortalView = document.getElementById('gk-role-portal-view');
+
+    if (gatekeeperEl) {
+        gatekeeperEl.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (mainAppEl) mainAppEl.classList.add('hidden');
+    if (roleSelectView) roleSelectView.classList.remove('hidden');
+    if (rolePortalView) rolePortalView.classList.add('hidden');
+
+    loadAuthUsers();
+    showToast('Select your role to access the portal.');
+}
+
+function hideLoginGatekeeper() {
+    const gatekeeperEl = document.getElementById('auth-gatekeeper');
+    const mainAppEl = document.getElementById('main-app-container');
+    if (gatekeeperEl) gatekeeperEl.classList.add('hidden');
+    if (mainAppEl) mainAppEl.classList.remove('hidden');
+    renderCurrentUser();
+    applyRolePermissions();
+    loadDashboardData();
+    lucide.createIcons();
+}
+
+async function loginGatekeeperAs(userId) {
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const json = await res.json();
+        if (json.success) {
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            hideLoginGatekeeper();
+            showToast(`Welcome! Logged in as ${currentUser.full_name} (${currentUser.role.toUpperCase()})`);
+        } else {
+            showToast(json.error || 'Login failed', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function openRolePortal(role) {
+    selectedGatekeeperRole = role;
+    const roleSelectView = document.getElementById('gk-role-selection-view');
+    const rolePortalView = document.getElementById('gk-role-portal-view');
+    if (roleSelectView) roleSelectView.classList.add('hidden');
+    if (rolePortalView) rolePortalView.classList.remove('hidden');
+
+    const badgeEl = document.getElementById('gk-portal-role-badge');
+    const iconEl = document.getElementById('gk-portal-role-icon');
+    const titleEl = document.getElementById('gk-portal-role-title');
+    const descEl = document.getElementById('gk-portal-role-desc');
+    const regLabel = document.getElementById('portal-tab-register-label');
+
+    // Forms
+    const formDoc = document.getElementById('form-register-doctor');
+    const formPat = document.getElementById('form-register-patient');
+    const formAdm = document.getElementById('form-register-admin');
+
+    if (formDoc) formDoc.classList.add('hidden');
+    if (formPat) formPat.classList.add('hidden');
+    if (formAdm) formAdm.classList.add('hidden');
+
+    if (role === 'doctor') {
+        if (badgeEl) {
+            badgeEl.className = 'text-xs font-bold px-3 py-1 rounded-full border bg-blue-500/20 text-blue-300 border-blue-400/30';
+            badgeEl.textContent = 'DOCTOR PORTAL';
+        }
+        if (iconEl) {
+            iconEl.className = 'w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-blue-300 text-2xl shadow-lg';
+            iconEl.innerHTML = '<i data-lucide="stethoscope" class="w-7 h-7"></i>';
+        }
+        if (titleEl) titleEl.textContent = 'Doctor Clinical Gateway';
+        if (descEl) descEl.textContent = 'Sign in to access your OPD consultations, patient diagnoses, and prescriptions, or register as a new specialist doctor with weekly OPD schedules in MySQL.';
+        if (regLabel) regLabel.textContent = 'Register New Doctor (Specialization & Schedules)';
+        if (formDoc) formDoc.classList.remove('hidden');
+        populateDoctorDepartmentDropdown();
+    } else if (role === 'patient') {
+        if (badgeEl) {
+            badgeEl.className = 'text-xs font-bold px-3 py-1 rounded-full border bg-teal-500/20 text-teal-300 border-teal-400/30';
+            badgeEl.textContent = 'PATIENT PORTAL';
+        }
+        if (iconEl) {
+            iconEl.className = 'w-14 h-14 rounded-2xl bg-teal-600/30 border border-teal-500/50 flex items-center justify-center text-teal-300 text-2xl shadow-lg';
+            iconEl.innerHTML = '<i data-lucide="heart-pulse" class="w-7 h-7"></i>';
+        }
+        if (titleEl) titleEl.textContent = 'Patient Health Gateway';
+        if (descEl) descEl.textContent = 'Sign in to book doctor appointments, view case histories, download digital prescriptions, or register for an official MediCare UHID in MySQL.';
+        if (regLabel) regLabel.textContent = 'Register New Patient (Generate UHID)';
+        if (formPat) formPat.classList.remove('hidden');
+    } else {
+        if (badgeEl) {
+            badgeEl.className = 'text-xs font-bold px-3 py-1 rounded-full border bg-purple-500/20 text-purple-300 border-purple-400/30';
+            badgeEl.textContent = 'HOSPITAL ADMIN PORTAL';
+        }
+        if (iconEl) {
+            iconEl.className = 'w-14 h-14 rounded-2xl bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-300 text-2xl shadow-lg';
+            iconEl.innerHTML = '<i data-lucide="shield-check" class="w-7 h-7"></i>';
+        }
+        if (titleEl) titleEl.textContent = 'Hospital Administrator Gateway';
+        if (descEl) descEl.textContent = 'Sign in for master control over specialist doctors, clinical departments, pharmacy stocks, and billing audits, or register an authorized admin passkey in MySQL.';
+        if (regLabel) regLabel.textContent = 'Register Authorized Administrator';
+        if (formAdm) formAdm.classList.remove('hidden');
+    }
+
+    switchPortalTab('login');
+    populatePortalUserPicker(role);
+    lucide.createIcons();
+}
+
+function backToRoleSelect() {
+    const roleSelectView = document.getElementById('gk-role-selection-view');
+    const rolePortalView = document.getElementById('gk-role-portal-view');
+    if (roleSelectView) roleSelectView.classList.remove('hidden');
+    if (rolePortalView) rolePortalView.classList.add('hidden');
+    lucide.createIcons();
+}
+
+function switchPortalTab(tab) {
+    const loginSec = document.getElementById('portal-login-section');
+    const regSec = document.getElementById('portal-register-section');
+    const loginBtn = document.getElementById('portal-tab-login-btn');
+    const regBtn = document.getElementById('portal-tab-register-btn');
+
+    if (tab === 'login') {
+        if (loginSec) loginSec.classList.remove('hidden');
+        if (regSec) regSec.classList.add('hidden');
+        if (loginBtn) {
+            loginBtn.className = 'flex-1 py-2.5 text-teal-400 border-b-2 border-teal-400 text-center transition flex items-center justify-center gap-2 font-bold';
+        }
+        if (regBtn) {
+            regBtn.className = 'flex-1 py-2.5 text-slate-400 hover:text-white border-b-2 border-transparent text-center transition flex items-center justify-center gap-2 font-bold';
+        }
+    } else {
+        if (loginSec) loginSec.classList.add('hidden');
+        if (regSec) regSec.classList.remove('hidden');
+        if (loginBtn) {
+            loginBtn.className = 'flex-1 py-2.5 text-slate-400 hover:text-white border-b-2 border-transparent text-center transition flex items-center justify-center gap-2 font-bold';
+        }
+        if (regBtn) {
+            regBtn.className = 'flex-1 py-2.5 text-teal-400 border-b-2 border-teal-400 text-center transition flex items-center justify-center gap-2 font-bold';
+        }
+    }
+    lucide.createIcons();
+}
+
+async function populatePortalUserPicker(role) {
+    const picker = document.getElementById('portal-quick-user-picker');
+    if (!picker) return;
+
+    if (!cachedUsers || cachedUsers.length === 0) {
+        try {
+            const res = await fetch('/api/auth/users');
+            const json = await res.json();
+            if (json.success) cachedUsers = json.data;
+        } catch (_) {}
+    }
+
+    const filtered = (cachedUsers || []).filter(u => u.role.toLowerCase() === role.toLowerCase());
+    if (filtered.length === 0) {
+        picker.innerHTML = `<option value="">No existing ${role} accounts found. Please register below.</option>`;
+    } else {
+        picker.innerHTML = filtered.map(u => {
+            const extra = u.specialization ? ` (${u.specialization})` : (u.patient_id ? ` (UHID-${1000 + u.patient_id})` : '');
+            return `<option value="${u.user_id}">${u.full_name}${extra} — [${u.username}]</option>`;
+        }).join('');
+    }
+}
+
+async function populateDoctorDepartmentDropdown() {
+    const deptSelect = document.getElementById('reg-doc-dept');
+    if (!deptSelect) return;
+
+    if (!cachedDepartments || cachedDepartments.length === 0) {
+        try {
+            const res = await fetch('/api/departments');
+            const json = await res.json();
+            if (json.success) cachedDepartments = json.data;
+        } catch (_) {}
+    }
+
+    if (cachedDepartments && cachedDepartments.length > 0) {
+        deptSelect.innerHTML = cachedDepartments.map(d => `
+            <option value="${d.department_id}">${d.department_name} (${d.floor})</option>
+        `).join('');
+    } else {
+        deptSelect.innerHTML = `
+            <option value="1">Cardiology</option>
+            <option value="2">Neurology</option>
+            <option value="3">Pediatrics</option>
+            <option value="4">Orthopedics</option>
+            <option value="5">General Medicine</option>
+            <option value="6">Dermatology</option>
+        `;
+    }
+}
+
+function loginWithSelectedPickerUser() {
+    const picker = document.getElementById('portal-quick-user-picker');
+    if (!picker || !picker.value) {
+        return showToast('Please select an account first or register a new one below.', 'warning');
+    }
+    loginGatekeeperAs(Number(picker.value));
+}
+
+async function handlePortalCredentialLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('portal-login-username').value.trim();
+    const password = document.getElementById('portal-login-password').value.trim();
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const json = await res.json();
+        if (json.success) {
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            hideLoginGatekeeper();
+            showToast(`Welcome back, ${currentUser.full_name}! (${currentUser.role.toUpperCase()})`);
+            e.target.reset();
+        } else {
+            showToast(json.error || 'Invalid credentials', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleDoctorRegistration(e) {
+    e.preventDefault();
+    const dayCheckboxes = document.querySelectorAll('input[name="doc-days"]:checked');
+    const selectedDays = Array.from(dayCheckboxes).map(cb => cb.value);
+
+    if (selectedDays.length === 0) {
+        return showToast('Please select at least one OPD consultation day.', 'warning');
+    }
+
+    const payload = {
+        name: document.getElementById('reg-doc-name').value.trim(),
+        email: document.getElementById('reg-doc-email').value.trim(),
+        phone: document.getElementById('reg-doc-phone').value.trim(),
+        department_id: document.getElementById('reg-doc-dept').value,
+        specialization: document.getElementById('reg-doc-spec').value.trim(),
+        experience_years: document.getElementById('reg-doc-exp').value,
+        days: selectedDays,
+        start_time: document.getElementById('reg-doc-start-time').value,
+        end_time: document.getElementById('reg-doc-end-time').value,
+        break_start: document.getElementById('reg-doc-break-start').value,
+        break_end: document.getElementById('reg-doc-break-end').value,
+        username: document.getElementById('reg-doc-username').value.trim(),
+        password: document.getElementById('reg-doc-password').value.trim() || 'doctor123'
+    };
+
+    try {
+        const res = await fetch('/api/auth/register-doctor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast(`Doctor ${payload.name} registered successfully with OPD schedule in MySQL!`);
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            hideLoginGatekeeper();
+            e.target.reset();
+            loadDoctors();
+            loadDepartments();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to register doctor', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handlePatientRegistration(e) {
+    e.preventDefault();
+    const payload = {
+        name: document.getElementById('reg-pat-name').value.trim(),
+        email: document.getElementById('reg-pat-email').value.trim(),
+        phone: document.getElementById('reg-pat-phone').value.trim(),
+        date_of_birth: document.getElementById('reg-pat-dob').value,
+        gender: document.getElementById('reg-pat-gender').value,
+        address: document.getElementById('reg-pat-address').value.trim(),
+        username: document.getElementById('reg-pat-username').value.trim(),
+        password: document.getElementById('reg-pat-password').value.trim() || 'patient123'
+    };
+
+    try {
+        const res = await fetch('/api/auth/register-patient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast(`Patient account created in MySQL with official UHID!`);
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            hideLoginGatekeeper();
+            e.target.reset();
+            loadPatients();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to register patient', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleAdminRegistration(e) {
+    e.preventDefault();
+    const passkey = document.getElementById('reg-adm-passkey').value.trim();
+    if (passkey !== 'admin123' && passkey !== 'hospital123') {
+        return showToast('Invalid Hospital Authorization Key. Use admin123', 'error');
+    }
+
+    const payload = {
+        full_name: document.getElementById('reg-adm-name').value.trim(),
+        username: document.getElementById('reg-adm-username').value.trim(),
+        email: document.getElementById('reg-adm-email').value.trim(),
+        password: document.getElementById('reg-adm-password').value.trim() || 'admin123'
+    };
+
+    try {
+        const res = await fetch('/api/auth/register-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast(`Administrator ${payload.full_name} registered successfully in MySQL!`);
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            hideLoginGatekeeper();
+            e.target.reset();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to register administrator', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function applyRolePermissions() {
+    if (!currentUser) return;
+    const role = (currentUser.role || 'admin').toLowerCase();
+
+    // 1. Doctors management: Admin ONLY
+    const btnAddDoctor = document.getElementById('btn-add-doctor');
+    if (btnAddDoctor) {
+        if (role === 'admin') btnAddDoctor.classList.remove('hidden');
+        else btnAddDoctor.classList.add('hidden');
+    }
+
+    // 2. Pharmacy Stock management: Admin ONLY
+    const btnAddMedication = document.getElementById('btn-add-medication');
+    if (btnAddMedication) {
+        if (role === 'admin') btnAddMedication.classList.remove('hidden');
+        else btnAddMedication.classList.add('hidden');
+    }
+
+    // 3. Clinical Case Records (Diagnoses): Doctor & Admin ONLY (Patients CANNOT diagnose)
+    const btnAddHistory = document.getElementById('btn-add-history');
+    if (btnAddHistory) {
+        if (role === 'patient') btnAddHistory.classList.add('hidden');
+        else btnAddHistory.classList.remove('hidden');
+    }
+
+    // 4. Prescriptions (Rx): Doctor & Admin ONLY (Patients CANNOT prescribe)
+    const btnAddPrescription = document.getElementById('btn-add-prescription');
+    if (btnAddPrescription) {
+        if (role === 'patient') btnAddPrescription.classList.add('hidden');
+        else btnAddPrescription.classList.remove('hidden');
+    }
+
+    // 5. Patient Registration from Header: Staff/Admin & Doctor only (not patient)
+    const btnRegPatientHeader = document.getElementById('btn-register-patient-header');
+    if (btnRegPatientHeader) {
+        if (role === 'patient') btnRegPatientHeader.classList.add('hidden');
+        else btnRegPatientHeader.classList.remove('hidden');
+    }
+
+    // Re-render UI grids & tables with active role permissions applied
+    if (cachedDoctors && cachedDoctors.length > 0) renderDoctorsGrid();
+    if (cachedAppointments && cachedAppointments.length > 0) renderAppointments(cachedAppointments);
+    if (cachedPatients && cachedPatients.length > 0) renderPatients(cachedPatients);
+    if (cachedMedications && cachedMedications.length > 0) renderMedicationsTable();
+    if (cachedBilling && cachedBilling.length > 0) renderBilling(cachedBilling);
+
+    lucide.createIcons();
+}
+
+async function loadAuthUsers() {
+    try {
+        const res = await fetch('/api/auth/users');
+        const json = await res.json();
+        if (json.success) {
+            cachedUsers = json.data;
+            renderAuthCards();
+        }
+    } catch (err) {
+        console.error('Error loading auth users:', err);
+    }
+}
+
+function filterAuthCards(role) {
+    activeAuthFilter = role;
+    document.querySelectorAll('.auth-role-pill').forEach(btn => {
+        btn.className = 'auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200';
+    });
+    const activeBtn = document.getElementById(`auth-pill-${role}`);
+    if (activeBtn) {
+        activeBtn.className = 'auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-[#0B192C] text-white';
+    }
+    renderAuthCards();
+}
+
+function renderAuthCards() {
+    const container = document.getElementById('auth-quick-cards');
+    if (!container) return;
+
+    let users = cachedUsers;
+    if (activeAuthFilter !== 'all') {
+        users = cachedUsers.filter(u => u.role.toLowerCase() === activeAuthFilter);
+    }
+
+    if (!users || users.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-6 text-slate-400 text-xs">No accounts found for this role.</div>`;
+        return;
+    }
+
+    container.innerHTML = users.map(u => {
+        const isActive = currentUser && Number(currentUser.user_id) === Number(u.user_id);
+        const roleColor = u.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                          u.role === 'doctor' ? 'bg-teal-100 text-teal-800 border-teal-200' :
+                          'bg-blue-100 text-blue-800 border-blue-200';
+
+        const roleDetail = u.role === 'doctor' && u.department_name ? `Dept: ${u.department_name}` :
+                           u.role === 'patient' && u.patient_gender ? `${u.patient_gender}, ${u.patient_age} yrs` :
+                           'Chief Administrator';
+
+        return `
+            <div class="p-3 rounded-xl border ${isActive ? 'border-teal-500 bg-teal-50/50 ring-2 ring-teal-500/20' : 'border-slate-200 bg-white hover:border-slate-300'} transition flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-lg ${u.role === 'admin' ? 'bg-purple-700' : u.role === 'doctor' ? 'bg-[#148F77]' : 'bg-blue-600'} text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        ${getInitials(u.full_name)}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-bold text-slate-900 text-xs truncate max-w-[130px]">${u.full_name}</span>
+                            <span class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border ${roleColor}">${u.role}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 truncate">${roleDetail} • <span class="font-mono text-slate-400">@${u.username}</span></div>
+                    </div>
+                </div>
+                <div>
+                    ${isActive ? `
+                        <span class="text-[10px] font-bold text-teal-700 bg-teal-100 px-2.5 py-1 rounded-md shrink-0">Active</span>
+                    ` : `
+                        <button onclick="loginAs(${u.user_id})" class="text-[11px] font-semibold text-slate-700 hover:text-white hover:bg-[#148F77] border border-slate-200 px-2.5 py-1 rounded-md transition shrink-0">
+                            Switch
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function loginAs(userId) {
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const json = await res.json();
+        if (json.success) {
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            closeModal('modal-auth-login');
+            renderCurrentUser();
+            showToast(`Switched active profile: ${currentUser.full_name} (${currentUser.role.toUpperCase()})`);
+            renderAuthCards();
+            applyRolePermissions();
+        } else {
+            showToast(json.error || 'Failed to switch role', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleLoginForm(e) {
+    e.preventDefault();
+    const username = document.getElementById('auth-input-username').value.trim();
+    const password = document.getElementById('auth-input-password').value.trim();
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const json = await res.json();
+        if (json.success) {
+            currentUser = json.data || json.user;
+            sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
+            localStorage.setItem('medicare_user', JSON.stringify(currentUser));
+            closeModal('modal-auth-login');
+            renderCurrentUser();
+            showToast(`Welcome back, ${currentUser.full_name}! (${currentUser.role.toUpperCase()})`);
+            renderAuthCards();
+            applyRolePermissions();
+            e.target.reset();
+        } else {
+            showToast(json.error || 'Invalid credentials', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function logoutUser() {
+    showLoginGatekeeper();
+}
+
+function renderCurrentUser() {
+    if (!currentUser) return;
+
+    // Header user pill
+    const avatarEl = document.getElementById('header-user-avatar');
+    const nameEl = document.getElementById('header-user-name');
+    const roleEl = document.getElementById('header-user-role');
+
+    if (avatarEl) avatarEl.textContent = getInitials(currentUser.full_name);
+    if (nameEl) nameEl.textContent = currentUser.full_name;
+    if (roleEl) {
+        roleEl.textContent = (currentUser.role || 'ADMIN').toUpperCase();
+        if (currentUser.role === 'admin') roleEl.className = 'text-[9px] text-purple-700 font-extrabold uppercase tracking-wider';
+        else if (currentUser.role === 'doctor') roleEl.className = 'text-[9px] text-teal-700 font-extrabold uppercase tracking-wider';
+        else roleEl.className = 'text-[9px] text-blue-700 font-extrabold uppercase tracking-wider';
+    }
+
+    // Overview banner
+    const bannerBadge = document.getElementById('role-avatar-badge');
+    const bannerLabel = document.getElementById('role-badge-label');
+    const bannerType = document.getElementById('role-account-type');
+    const bannerHeading = document.getElementById('role-user-heading');
+    const bannerDesc = document.getElementById('role-user-desc');
+
+    if (bannerBadge) bannerBadge.textContent = getInitials(currentUser.full_name);
+    if (bannerHeading) bannerHeading.textContent = `Welcome, ${currentUser.full_name}`;
+
+    if (bannerLabel) {
+        bannerLabel.textContent = `ACTIVE ROLE: ${(currentUser.role || 'ADMIN').toUpperCase()}`;
+        if (currentUser.role === 'admin') bannerLabel.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-400 text-slate-900';
+        else if (currentUser.role === 'doctor') bannerLabel.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-400 text-slate-900';
+        else bannerLabel.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-300 text-slate-900';
+    }
+
+    if (bannerType) {
+        if (currentUser.role === 'doctor') bannerType.textContent = '• Consulting Specialist Physician';
+        else if (currentUser.role === 'patient') bannerType.textContent = '• Registered Outpatient Profile';
+        else bannerType.textContent = '• Chief Hospital Administrator';
+    }
+
+    if (bannerDesc) {
+        if (currentUser.role === 'doctor') {
+            bannerDesc.textContent = `Doctor view enabled: OPD consultations, write prescriptions, and schedule management for Dr. ${currentUser.full_name}.`;
+        } else if (currentUser.role === 'patient') {
+            bannerDesc.textContent = `Patient portal view: Book appointments, view your clinical history, and check your pharmacy & consultation bills.`;
+        } else {
+            bannerDesc.textContent = 'Full administrative control over OPD reception, doctors, pharmacy inventory, and billing accounts.';
+        }
+    }
+
+    lucide.createIcons();
+}
+
+function applyRoleFilters() {
+    if (cachedAppointments && cachedAppointments.length > 0) {
+        renderAppointments(cachedAppointments);
+    }
+}
 
 // Switch Sidebar Tab
 function switchTab(tabId) {
@@ -144,11 +812,26 @@ function switchTab(tabId) {
 // =====================================================================
 // 1. OVERVIEW DASHBOARD
 // =====================================================================
+function updateDbBadge(engine) {
+    const badge = document.getElementById('db-badge');
+    if (!badge) return;
+    if (engine === 'mysql') {
+        badge.className = 'hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border bg-emerald-50 text-emerald-800 border-emerald-300';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>MySQL (hospital_management_db)</span>';
+        badge.title = 'Active: Connected directly to MySQL Server on localhost:3306';
+    } else {
+        badge.className = 'hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border bg-amber-50 text-amber-800 border-amber-300';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>SQLite (hospital.db)</span>';
+        badge.title = 'Running on SQLite fallback. To connect to MySQL Workbench, add your MySQL password in .env and restart!';
+    }
+}
+
 async function loadDashboardData() {
     try {
         const res = await fetch('/api/stats');
         const json = await res.json();
         if (json.success) {
+            updateDbBadge(json.engine);
             const d = json.data;
             document.getElementById('stat-patients').textContent = d.patientsCount;
             document.getElementById('stat-doctors').textContent = d.doctorsCount;
@@ -262,9 +945,11 @@ function renderPatients(patients) {
                     <button onclick="viewPatient360(${p.patient_id})" class="bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200/80 font-semibold px-3 py-1.5 rounded-lg text-xs mr-1.5 transition">
                         Patient Chart
                     </button>
+                    ${(currentUser && currentUser.role === 'admin') ? `
                     <button onclick="deletePatient(${p.patient_id})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition" title="Remove Patient">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
                     </button>
+                    ` : ''}
                 </td>
             </tr>
         `;
@@ -298,9 +983,8 @@ async function handleCreatePatient(e) {
     };
 
     try {
-        const res = await fetch('/api/patients', {
+        const res = await apiFetch('/api/patients', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -319,13 +1003,20 @@ async function handleCreatePatient(e) {
 }
 
 async function deletePatient(id) {
-    if (!confirm('Remove this patient and associated records from the registry?')) return;
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can remove patients from the registry.', 'error');
+    }
+    if (!confirm('Remove this patient and associated records from the registry? All linked appointments, bills, and medical history will be deleted from MySQL.')) return;
     try {
-        const res = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
+        const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
         const json = await res.json();
         if (json.success) {
-            showToast('Patient removed');
+            showToast('Patient and all associated records deleted from MySQL');
             loadPatients();
+            loadAppointments();
+            loadMedicalHistory();
+            loadBilling();
+            loadPrescriptions();
             loadDashboardData();
         } else {
             showToast(json.error, 'error');
@@ -414,7 +1105,7 @@ async function viewPatient360(id) {
                                     <span class="text-slate-500">${b.bill_date} (${b.payment_mode})</span>
                                 </div>
                                 <div class="flex items-center gap-2.5">
-                                    <span class="font-bold text-slate-900 font-mono">₹${b.total_amount.toFixed(2)}</span>
+                                    <span class="font-bold text-slate-900 font-mono">₹${formatCurrency(b.total_amount)}</span>
                                     <span class="badge-status badge-${b.payment_status}">${b.payment_status}</span>
                                 </div>
                             </div>
@@ -581,6 +1272,23 @@ function renderDoctorsGrid() {
                         </div>
                     `}
                 </div>
+
+                <!-- Actions: Edit & Remove (Restricted to Admin Only) -->
+                ${(currentUser && currentUser.role === 'admin') ? `
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <button onclick="openEditDoctorModal(${doc.doctor_id})" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 transition">
+                        <i data-lucide="edit-2" class="w-3.5 h-3.5"></i> Edit Profile
+                    </button>
+                    <button onclick="deleteDoctor(${doc.doctor_id})" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg text-rose-600 hover:bg-rose-50 transition">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
+                    </button>
+                </div>
+                ` : `
+                <div class="pt-2.5 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span class="inline-flex items-center gap-1 text-teal-700 font-semibold"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Verified Specialist</span>
+                    <span class="text-slate-400">OPD Roster</span>
+                </div>
+                `}
             </div>
         `;
     }).join('');
@@ -589,6 +1297,9 @@ function renderDoctorsGrid() {
 
 async function handleCreateDoctor(e) {
     e.preventDefault();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can add doctors to hospital roster.', 'error');
+    }
     const data = {
         name: document.getElementById('new-doc-name').value.trim(),
         email: document.getElementById('new-doc-email').value.trim(),
@@ -599,9 +1310,8 @@ async function handleCreateDoctor(e) {
     };
 
     try {
-        const res = await fetch('/api/doctors', {
+        const res = await apiFetch('/api/doctors', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -614,6 +1324,96 @@ async function handleCreateDoctor(e) {
             loadDashboardData();
         } else {
             showToast(json.error, 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function openEditDoctorModal(doctorId) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can edit doctor details.', 'error');
+    }
+    const doc = cachedDoctors.find(d => d.doctor_id === doctorId);
+    if (!doc) return;
+
+    // Populate department select options
+    const deptOptions = cachedDepartments.length > 0 
+        ? cachedDepartments.map(d => `<option value="${d.department_id}">${d.department_name}</option>`).join('')
+        : '<option value="1">Cardiology</option>';
+    const deptSelect = document.getElementById('edit-doc-dept');
+    if (deptSelect) deptSelect.innerHTML = deptOptions;
+
+    // Set input values
+    document.getElementById('edit-doc-id').value = doc.doctor_id;
+    document.getElementById('edit-doc-name').value = doc.name;
+    document.getElementById('edit-doc-email').value = doc.email;
+    document.getElementById('edit-doc-phone').value = doc.phone;
+    document.getElementById('edit-doc-dept').value = doc.department_id;
+    document.getElementById('edit-doc-exp').value = doc.experience_years;
+    document.getElementById('edit-doc-spec').value = doc.specialization;
+
+    openModal('modal-edit-doctor');
+}
+
+async function handleUpdateDoctor(e) {
+    e.preventDefault();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can update doctor profiles.', 'error');
+    }
+    const id = document.getElementById('edit-doc-id').value;
+    const data = {
+        name: document.getElementById('edit-doc-name').value.trim(),
+        email: document.getElementById('edit-doc-email').value.trim(),
+        phone: document.getElementById('edit-doc-phone').value.trim(),
+        department_id: document.getElementById('edit-doc-dept').value,
+        experience_years: document.getElementById('edit-doc-exp').value,
+        specialization: document.getElementById('edit-doc-spec').value.trim()
+    };
+
+    try {
+        const res = await apiFetch(`/api/doctors/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Doctor details updated successfully in MySQL!');
+            closeModal('modal-edit-doctor');
+            loadDoctors();
+            loadDepartments();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to update doctor', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteDoctor(id) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can remove doctors.', 'error');
+    }
+    const doc = cachedDoctors.find(d => d.doctor_id === id);
+    const docName = doc ? doc.name : 'this doctor';
+    if (!confirm(`Are you sure you want to remove ${docName}? All associated schedules, appointments, and clinical records will also be removed from MySQL.`)) return;
+
+    try {
+        const res = await apiFetch(`/api/doctors/${id}`, {
+            method: 'DELETE'
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Doctor and all linked records removed from MySQL');
+            loadDoctors();
+            loadDepartments();
+            loadAppointments();
+            loadMedicalHistory();
+            loadPrescriptions();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to remove doctor', 'error');
         }
     } catch (err) {
         showToast(err.message, 'error');
@@ -643,15 +1443,28 @@ function renderAppointments(appts) {
         return;
     }
 
-    tbody.innerHTML = appts.map(a => `
-        <tr class="hover:bg-slate-50/80 transition">
+    tbody.innerHTML = appts.map(a => {
+        const isDocMatch = currentUser && currentUser.role === 'doctor' && Number(currentUser.doctor_id) === Number(a.doctor_id);
+        const isPatMatch = currentUser && currentUser.role === 'patient' && Number(currentUser.patient_id) === Number(a.patient_id);
+        const rowHighlight = isDocMatch ? 'bg-teal-50/60 border-l-4 border-l-[#148F77]' : 
+                             isPatMatch ? 'bg-blue-50/60 border-l-4 border-l-blue-600' : 
+                             'hover:bg-slate-50/80';
+
+        return `
+        <tr class="${rowHighlight} transition">
             <td class="py-3.5 px-4 font-mono font-semibold text-slate-500">APT-${100 + a.appointment_id}</td>
             <td class="py-3.5 px-4">
-                <div class="font-bold text-slate-900">${a.patient_name}</div>
+                <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>${a.patient_name}</span>
+                    ${isPatMatch ? '<span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">You</span>' : ''}
+                </div>
                 <div class="text-[11px] text-slate-400 font-mono">${a.patient_phone}</div>
             </td>
             <td class="py-3.5 px-4">
-                <div class="font-semibold text-slate-800">${a.doctor_name}</div>
+                <div class="font-semibold text-slate-800 flex items-center gap-1.5">
+                    <span>${a.doctor_name}</span>
+                    ${isDocMatch ? '<span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-teal-100 text-teal-800">Your Patient</span>' : ''}
+                </div>
                 <div class="text-[11px] text-teal-700">${a.department_name}</div>
             </td>
             <td class="py-3.5 px-4 font-mono text-slate-700">${a.appointment_date}</td>
@@ -668,16 +1481,24 @@ function renderAppointments(appts) {
             </td>
             <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 ${a.status === 'Scheduled' ? `
+                    ${(currentUser && currentUser.role !== 'patient') ? `
                     <button onclick="updateAppointmentStatus(${a.appointment_id}, 'Completed')" class="bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-md text-[11px] font-semibold mr-1 transition">
                         Mark Done
                     </button>
-                    <button onclick="updateAppointmentStatus(${a.appointment_id}, 'Cancelled')" class="text-slate-400 hover:text-rose-600 px-2 py-1 rounded-md text-[11px] font-medium transition">
+                    ` : ''}
+                    <button onclick="updateAppointmentStatus(${a.appointment_id}, 'Cancelled')" class="text-slate-500 hover:text-slate-800 px-2 py-1 rounded-md text-[11px] font-medium transition mr-1">
                         Cancel
                     </button>
-                ` : `<span class="text-slate-400 text-[11px]">Closed</span>`}
+                ` : `<span class="text-slate-400 text-[11px] mr-1.5">Closed</span>`}
+                ${(currentUser && currentUser.role === 'admin') ? `
+                <button onclick="deleteAppointment(${a.appointment_id})" class="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-1 rounded-md text-[11px] font-semibold transition" title="Delete appointment and linked billing">
+                    Delete
+                </button>
+                ` : ''}
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function setAppointmentFilter(status) {
@@ -698,8 +1519,12 @@ function setAppointmentFilter(status) {
 
 async function handleBookAppointment(e) {
     e.preventDefault();
+    const patient_id = (currentUser && currentUser.role === 'patient' && currentUser.patient_id) 
+        ? currentUser.patient_id 
+        : document.getElementById('appt-patient-select').value;
+
     const data = {
-        patient_id: document.getElementById('appt-patient-select').value,
+        patient_id: patient_id,
         doctor_id: document.getElementById('appt-doctor-select').value,
         appointment_date: document.getElementById('appt-date').value,
         start_time: document.getElementById('appt-start').value,
@@ -709,9 +1534,8 @@ async function handleBookAppointment(e) {
     };
 
     try {
-        const res = await fetch('/api/appointments', {
+        const res = await apiFetch('/api/appointments', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -732,9 +1556,8 @@ async function handleBookAppointment(e) {
 
 async function updateAppointmentStatus(id, status) {
     try {
-        const res = await fetch(`/api/appointments/${id}/status`, {
+        const res = await apiFetch(`/api/appointments/${id}/status`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
         const json = await res.json();
@@ -744,6 +1567,28 @@ async function updateAppointmentStatus(id, status) {
             loadDashboardData();
         } else {
             showToast(json.error, 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteAppointment(id) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can delete appointments from MySQL.', 'error');
+    }
+    if (!confirm(`Permanently delete Appointment APT-${100 + id} and its linked billing invoice from MySQL?`)) return;
+    try {
+        const res = await apiFetch(`/api/appointments/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Appointment and linked invoice deleted from MySQL');
+            loadAppointments();
+            loadBilling();
+            loadPrescriptions();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to delete appointment', 'error');
         }
     } catch (err) {
         showToast(err.message, 'error');
@@ -777,7 +1622,14 @@ async function loadMedicalHistory() {
                                     <span class="text-[11px] text-slate-400">Consulted ${m.doctor_name} (${m.department_name})</span>
                                 </div>
                             </div>
-                            <span class="font-mono text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${m.record_date}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${m.record_date}</span>
+                                ${(currentUser && currentUser.role === 'admin') ? `
+                                <button onclick="deleteMedicalHistory(${m.history_id})" class="text-slate-400 hover:text-rose-600 p-1 rounded transition" title="Delete Case Note">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
 
                         <div class="mt-3 space-y-2 text-xs">
@@ -803,14 +1655,37 @@ async function loadMedicalHistory() {
                     ` : ''}
                 </div>
             `).join('');
+            lucide.createIcons();
         }
     } catch (err) {
         console.error('Error loading medical history:', err);
     }
 }
 
+async function deleteMedicalHistory(id) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can delete clinical case notes from MySQL.', 'error');
+    }
+    if (!confirm('Remove this clinical case note from MySQL?')) return;
+    try {
+        const res = await apiFetch(`/api/medical-history/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Clinical case note removed from MySQL');
+            loadMedicalHistory();
+        } else {
+            showToast(json.error || 'Failed to remove note', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
 async function handleCreateHistory(e) {
     e.preventDefault();
+    if (currentUser && currentUser.role === 'patient') {
+        return showToast('Permission Denied: Patients cannot document diagnoses or case sheets.', 'error');
+    }
     const data = {
         patient_id: document.getElementById('history-patient-select').value,
         doctor_id: document.getElementById('history-doctor-select').value,
@@ -822,9 +1697,8 @@ async function handleCreateHistory(e) {
     };
 
     try {
-        const res = await fetch('/api/medical-history', {
+        const res = await apiFetch('/api/medical-history', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -850,43 +1724,60 @@ async function loadMedications() {
         const json = await res.json();
         if (json.success) {
             cachedMedications = json.data;
-            const tbody = document.getElementById('medications-table-body');
-            tbody.innerHTML = cachedMedications.map(m => {
-                const isLow = m.stock_quantity < 100;
-                return `
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3.5 px-4 font-mono text-slate-500">MED-${100 + m.medication_id}</td>
-                        <td class="py-3.5 px-4 font-bold text-slate-900">${m.medicine_name}</td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-0.5 rounded-md text-[11px] bg-slate-100 text-slate-700 font-medium">${m.type}</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-slate-600">${m.unit}</td>
-                        <td class="py-3.5 px-4 font-mono font-semibold text-slate-800">₹${m.price.toFixed(2)}</td>
-                        <td class="py-3.5 px-4 font-mono font-bold ${isLow ? 'text-amber-700' : 'text-slate-800'}">${m.stock_quantity} packs</td>
-                        <td class="py-3.5 px-4">
-                            <span class="badge-status ${isLow ? 'badge-Pending' : 'badge-Completed'}">
-                                ${isLow ? 'Low Stock' : 'Available'}
-                            </span>
-                        </td>
-                        <td class="py-3.5 px-4 text-right">
-                            <button onclick="restockMedication(${m.medication_id}, 50)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-md text-[11px] transition">
-                                +50 Packs
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            renderMedicationsTable();
         }
     } catch (err) {
         console.error('Error loading medications:', err);
     }
 }
 
+function renderMedicationsTable() {
+    const tbody = document.getElementById('medications-table-body');
+    if (!tbody || !cachedMedications) return;
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
+    tbody.innerHTML = cachedMedications.map(m => {
+        const isLow = m.stock_quantity < 100;
+        return `
+            <tr class="hover:bg-slate-50/80 transition">
+                <td class="py-3.5 px-4 font-mono text-slate-500">MED-${100 + m.medication_id}</td>
+                <td class="py-3.5 px-4 font-bold text-slate-900">${m.medicine_name}</td>
+                <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-0.5 rounded-md text-[11px] bg-slate-100 text-slate-700 font-medium">${m.type}</span>
+                </td>
+                <td class="py-3.5 px-4 text-slate-600">${m.unit}</td>
+                <td class="py-3.5 px-4 font-mono font-semibold text-slate-800">₹${formatCurrency(m.price)}</td>
+                <td class="py-3.5 px-4 font-mono font-bold ${isLow ? 'text-amber-700' : 'text-slate-800'}">${m.stock_quantity} packs</td>
+                <td class="py-3.5 px-4">
+                    <span class="badge-status ${isLow ? 'badge-Pending' : 'badge-Completed'}">
+                        ${isLow ? 'Low Stock' : 'Available'}
+                    </span>
+                </td>
+                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    ${isAdmin ? `
+                        <button onclick="restockMedication(${m.medication_id}, 50)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-md text-[11px] transition">
+                            +50 Packs
+                        </button>
+                        <button onclick="deleteMedication(${m.medication_id})" class="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-1 rounded-md text-[11px] font-semibold transition ml-1" title="Delete Medication">
+                            Remove
+                        </button>
+                    ` : `
+                        <span class="text-slate-400 text-[11px] font-mono">Restricted</span>
+                    `}
+                </td>
+            </tr>
+        `;
+    }).join('');
+    lucide.createIcons();
+}
+
 async function restockMedication(id, qty) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can restock medications.', 'error');
+    }
     try {
-        const res = await fetch(`/api/medications/${id}/stock`, {
+        const res = await apiFetch(`/api/medications/${id}/stock`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adjustment: qty })
         });
         const json = await res.json();
@@ -894,6 +1785,8 @@ async function restockMedication(id, qty) {
             showToast(`Added ${qty} packs to pharmacy inventory`);
             loadMedications();
             loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to restock', 'error');
         }
     } catch (err) {
         showToast(err.message, 'error');
@@ -902,6 +1795,9 @@ async function restockMedication(id, qty) {
 
 async function handleCreateMedication(e) {
     e.preventDefault();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can add medicines to stock.', 'error');
+    }
     const data = {
         medicine_name: document.getElementById('new-med-name').value.trim(),
         type: document.getElementById('new-med-type').value,
@@ -911,9 +1807,8 @@ async function handleCreateMedication(e) {
     };
 
     try {
-        const res = await fetch('/api/medications', {
+        const res = await apiFetch('/api/medications', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -930,6 +1825,28 @@ async function handleCreateMedication(e) {
     }
 }
 
+async function deleteMedication(id) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        return showToast('Permission Denied: Only Admin can remove medications from MySQL.', 'error');
+    }
+    const med = cachedMedications.find(m => m.medication_id === id);
+    const medName = med ? med.medicine_name : 'this medicine';
+    if (!confirm(`Permanently remove ${medName} from pharmacy inventory in MySQL?`)) return;
+    try {
+        const res = await apiFetch(`/api/medications/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Medicine removed from MySQL');
+            loadMedications();
+            loadPrescriptions();
+        } else {
+            showToast(json.error || 'Failed to remove medicine', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
 // =====================================================================
 // 7. PRESCRIPTIONS (Rx)
 // =====================================================================
@@ -940,7 +1857,7 @@ async function loadPrescriptions() {
         if (json.success) {
             const tbody = document.getElementById('prescriptions-table-body');
             if (json.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">No prescriptions issued yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">No prescriptions issued yet.</td></tr>';
                 return;
             }
 
@@ -961,6 +1878,15 @@ async function loadPrescriptions() {
                     <td class="py-3.5 px-4 font-mono font-bold text-slate-700">${pr.quantity}</td>
                     <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${pr.instructions || ''}">${pr.instructions || 'As directed'}</td>
                     <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${pr.prescribed_date}</td>
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        ${(currentUser && currentUser.role !== 'patient') ? `
+                        <button onclick="deletePrescription(${pr.prescription_id})" class="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-1 rounded-md text-[11px] font-semibold transition" title="Cancel prescription and restore stock">
+                            Cancel Rx
+                        </button>
+                        ` : `
+                        <span class="text-teal-700 font-semibold text-[11px]">Valid Rx</span>
+                        `}
+                    </td>
                 </tr>
             `).join('');
         }
@@ -969,8 +1895,33 @@ async function loadPrescriptions() {
     }
 }
 
+async function deletePrescription(id) {
+    if (currentUser && currentUser.role === 'patient') {
+        return showToast('Permission Denied: Patients cannot cancel clinical prescriptions.', 'error');
+    }
+    if (!confirm('Cancel this prescription? Medicine stock will be restored and appointment billing adjusted.')) return;
+    try {
+        const res = await apiFetch(`/api/prescriptions/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+            showToast('Prescription cancelled: stock restored & invoice adjusted');
+            loadPrescriptions();
+            loadMedications();
+            loadBilling();
+            loadDashboardData();
+        } else {
+            showToast(json.error || 'Failed to cancel prescription', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
 async function handleCreatePrescription(e) {
     e.preventDefault();
+    if (currentUser && currentUser.role === 'patient') {
+        return showToast('Permission Denied: Patients cannot issue medical prescriptions.', 'error');
+    }
     const data = {
         appointment_id: parseInt(document.getElementById('presc-appt-select').value),
         doctor_id: parseInt(document.getElementById('presc-doctor-select').value),
@@ -984,9 +1935,8 @@ async function handleCreatePrescription(e) {
     };
 
     try {
-        const res = await fetch('/api/prescriptions', {
+        const res = await apiFetch('/api/prescriptions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         const json = await res.json();
@@ -1028,22 +1978,30 @@ function renderBilling(bills) {
         return;
     }
 
+    const isPatient = currentUser && currentUser.role === 'patient';
+    const isDoctor = currentUser && currentUser.role === 'doctor';
+
     tbody.innerHTML = bills.map(b => `
         <tr class="hover:bg-slate-50/80 transition">
             <td class="py-3.5 px-4 font-mono font-semibold text-slate-500">INV-${1000 + b.bill_id}</td>
             <td class="py-3.5 px-4 font-bold text-slate-900">${b.patient_name}</td>
             <td class="py-3.5 px-4 text-slate-600">${b.doctor_name}</td>
             <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${b.bill_date}</td>
-            <td class="py-3.5 px-4 font-bold text-slate-900 font-mono text-sm">₹${b.total_amount.toFixed(2)}</td>
+            <td class="py-3.5 px-4 font-bold text-slate-900 font-mono text-sm">₹${formatCurrency(b.total_amount)}</td>
             <td class="py-3.5 px-4"><span class="badge-status badge-${b.payment_status}">${b.payment_status}</span></td>
             <td class="py-3.5 px-4">
                 <span class="px-2.5 py-0.5 rounded-md text-[11px] bg-slate-100 text-slate-700 font-medium">${b.payment_mode}</span>
             </td>
             <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 ${b.payment_status === 'Pending' ? `
-                    <button onclick="openPayBillModal(${b.bill_id}, '${b.patient_name}', ${b.total_amount})" class="bg-[#148F77] hover:bg-[#107360] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                        Collect Payment
-                    </button>
+                    ${isDoctor ? `
+                        <span class="text-amber-600 font-semibold text-[11px] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">Payment Due</span>
+                    ` : `
+                        <button onclick="openPayBillModal(${b.bill_id}, '${b.patient_name}', ${b.total_amount})" class="${isPatient ? 'bg-teal-600 hover:bg-teal-500' : 'bg-[#148F77] hover:bg-[#107360]'} text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5">
+                            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+                            <span>${isPatient ? 'Pay Bill Online' : 'Collect Payment'}</span>
+                        </button>
+                    `}
                 ` : `
                     <button onclick="printInvoiceReceipt(${b.bill_id})" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Receipt
@@ -1067,7 +2025,7 @@ function openPayBillModal(billId, patientName, amount) {
     document.getElementById('pay-bill-id').value = billId;
     document.getElementById('pay-display-id').textContent = `INV-${1000 + billId}`;
     document.getElementById('pay-display-patient').textContent = patientName;
-    document.getElementById('pay-display-amount').textContent = `₹${amount.toFixed(2)}`;
+    document.getElementById('pay-display-amount').textContent = `₹${formatCurrency(amount)}`;
     openModal('modal-pay-bill');
 }
 
@@ -1077,9 +2035,8 @@ async function handlePayBill(e) {
     const payment_mode = document.getElementById('pay-payment-mode').value;
 
     try {
-        const res = await fetch(`/api/billing/${id}/pay`, {
+        const res = await apiFetch(`/api/billing/${id}/pay`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment_mode })
         });
         const json = await res.json();
@@ -1143,13 +2100,13 @@ function printInvoiceReceipt(billId) {
                 <tr>
                     <td class="p-2.5">OPD Specialist Consultation & Pharmacy Charges</td>
                     <td class="p-2.5 text-right">1</td>
-                    <td class="p-2.5 text-right font-mono">₹${bill.total_amount.toFixed(2)}</td>
+                    <td class="p-2.5 text-right font-mono">₹${formatCurrency(bill.total_amount)}</td>
                 </tr>
             </tbody>
             <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold">
                 <tr>
                     <td colspan="2" class="p-2.5 text-right text-slate-800">Total Amount Received</td>
-                    <td class="p-2.5 text-right text-slate-900 text-sm font-mono">₹${bill.total_amount.toFixed(2)}</td>
+                    <td class="p-2.5 text-right text-slate-900 text-sm font-mono">₹${formatCurrency(bill.total_amount)}</td>
                 </tr>
             </tfoot>
         </table>
@@ -1165,10 +2122,20 @@ function printInvoiceReceipt(billId) {
 
 // Populate Select Dropdowns inside Modals
 function populateSelectDropdowns() {
+    const isPatient = currentUser && currentUser.role === 'patient';
     const patientOptions = cachedPatients.map(p => `<option value="${p.patient_id}">${p.name} (UHID-${1000 + p.patient_id})</option>`).join('');
+    
     ['appt-patient-select', 'history-patient-select'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = `<option value="">Select patient...</option>` + patientOptions;
+        if (el) {
+            if (isPatient && currentUser.patient_id) {
+                el.innerHTML = `<option value="${currentUser.patient_id}" selected>${currentUser.full_name} (UHID-${1000 + currentUser.patient_id}) — You</option>`;
+                el.disabled = true;
+            } else {
+                el.disabled = false;
+                el.innerHTML = `<option value="">Select patient...</option>` + patientOptions;
+            }
+        }
     });
 
     const docOptions = cachedDoctors.map(d => `<option value="${d.doctor_id}">${d.name} — ${d.department_name}</option>`).join('');
@@ -1177,9 +2144,13 @@ function populateSelectDropdowns() {
         if (el) el.innerHTML = `<option value="">Select doctor...</option>` + docOptions;
     });
 
-    const deptOptions = cachedDepartments.map(d => `<option value="${d.department_id}">${d.department_name}</option>`).join('');
+    const deptOptions = cachedDepartments.length > 0 
+        ? cachedDepartments.map(d => `<option value="${d.department_id}">${d.department_name}</option>`).join('')
+        : '<option value="1">Cardiology</option>';
     const docDeptEl = document.getElementById('new-doc-dept');
     if (docDeptEl) docDeptEl.innerHTML = deptOptions;
+    const editDocDeptEl = document.getElementById('edit-doc-dept');
+    if (editDocDeptEl) editDocDeptEl.innerHTML = deptOptions;
 
     const medOptions = cachedMedications.map(m => `<option value="${m.medication_id}">${m.medicine_name} (₹${m.price} • ${m.stock_quantity} in stock)</option>`).join('');
     const prescMedEl = document.getElementById('presc-med-select');
@@ -1194,4 +2165,17 @@ function populateSelectDropdowns() {
         const el = document.getElementById(id);
         if (el && !el.value) el.value = today;
     });
+
+    // Auto pre-select according to active logged-in role
+    if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
+        ['appt-doctor-select', 'history-doctor-select', 'presc-doctor-select'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = currentUser.doctor_id;
+        });
+    } else if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+        ['appt-patient-select', 'history-patient-select'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = currentUser.patient_id;
+        });
+    }
 }

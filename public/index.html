@@ -10,7 +10,483 @@
 </head>
 <body class="bg-[#F4F7F9] text-slate-800 antialiased selection:bg-teal-600 selection:text-white">
 
-    <div class="flex h-screen overflow-hidden">
+    <!-- ============================================================= -->
+    <!-- GATEKEEPER LANDING SCREEN: ROLE SELECTION & LOGIN PORTAL -->
+    <!-- (Always appears first whenever anyone opens the website) -->
+    <!-- ============================================================= -->
+    <div id="auth-gatekeeper" class="min-h-screen bg-gradient-to-br from-[#071322] via-[#0B1E36] to-[#0A2540] text-slate-100 flex flex-col justify-between p-4 sm:p-8 select-none relative overflow-y-auto">
+        <!-- Top Branding Header -->
+        <div class="max-w-6xl w-full mx-auto flex items-center justify-between py-2 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#148F77] flex items-center justify-center text-white shadow-lg">
+                    <i data-lucide="plus" class="w-6 h-6 stroke-[3]"></i>
+                </div>
+                <div>
+                    <div class="font-extrabold text-white text-lg tracking-tight leading-none">MediCare Hospital</div>
+                    <div class="text-xs text-teal-300 font-medium mt-1">Clinical &amp; Hospital Management System</div>
+                </div>
+            </div>
+            <div class="text-xs text-slate-400 hidden sm:flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>MySQL 8.0 Live Connection</span>
+            </div>
+        </div>
+
+        <!-- Center Content Container -->
+        <div class="max-w-5xl w-full mx-auto my-auto py-6">
+
+            <!-- ========================================================= -->
+            <!-- STEP 1: ROLE SELECTION VIEW (Default Landing)            -->
+            <!-- ========================================================= -->
+            <div id="gk-role-selection-view">
+                <div class="text-center max-w-2xl mx-auto space-y-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-400/30">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Role-Based Access Gateway
+                    </span>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                        How do you want to access MediCare HMS?
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Please choose your role first to enter your dedicated clinical, patient, or administrative management portal.
+                    </p>
+                </div>
+
+                <!-- 3 Main Interactive Role Gatekeeper Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <!-- CARD 1: DOCTOR -->
+                    <div onclick="openRolePortal('doctor')" class="bg-gradient-to-b from-blue-950/40 to-slate-900/80 hover:to-blue-950/60 border border-blue-500/30 hover:border-blue-400 rounded-2xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-300 group-hover:scale-110 transition shadow-inner">
+                                    <i data-lucide="stethoscope" class="w-7 h-7"></i>
+                                </div>
+                                <span class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                                    CLINICAL SPECIALIST
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-blue-200 transition">Doctor Portal</h3>
+                            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                                Access OPD consultations, examine patient medical charts, record clinical diagnoses &amp; issue digital prescriptions (℞).
+                            </p>
+                            <div class="mt-5 pt-4 border-t border-white/10 text-[11px] text-slate-300 space-y-2">
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>OPD Schedule &amp; Consultations</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Record Clinical Case Diagnoses</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Issue Prescriptions (℞) to Patients</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/10">
+                            <button class="w-full py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2 group-hover:gap-3">
+                                <span>Continue as Doctor</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: PATIENT -->
+                    <div onclick="openRolePortal('patient')" class="bg-gradient-to-b from-teal-950/40 to-slate-900/80 hover:to-teal-950/60 border border-teal-500/30 hover:border-teal-400 rounded-2xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/20 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-14 h-14 rounded-2xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center text-teal-300 group-hover:scale-110 transition shadow-inner">
+                                    <i data-lucide="heart-pulse" class="w-7 h-7"></i>
+                                </div>
+                                <span class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30">
+                                    PATIENT SERVICES
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-teal-200 transition">Patient Portal</h3>
+                            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                                Book specialist visits, track active appointments, view doctor prescriptions, check medical history &amp; settle hospital bills.
+                            </p>
+                            <div class="mt-5 pt-4 border-t border-white/10 text-[11px] text-slate-300 space-y-2">
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Book Specialist Doctor Visits</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>View Case History &amp; Prescriptions</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Pay Invoices &amp; Print Tax Receipts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/10">
+                            <button class="w-full py-3 px-4 rounded-xl font-bold text-xs bg-[#148F77] hover:bg-[#107360] text-white shadow-lg shadow-teal-600/30 transition flex items-center justify-center gap-2 group-hover:gap-3">
+                                <span>Continue as Patient</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: ADMIN -->
+                    <div onclick="openRolePortal('admin')" class="bg-gradient-to-b from-purple-950/40 to-slate-900/80 hover:to-purple-950/60 border border-purple-500/30 hover:border-purple-400 rounded-2xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 group-hover:scale-110 transition shadow-inner">
+                                    <i data-lucide="shield-alert" class="w-7 h-7"></i>
+                                </div>
+                                <span class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                                    HOSPITAL ADMIN
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-purple-200 transition">Administrator Portal</h3>
+                            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                                Complete administrative control over specialist doctors, clinical departments, pharmacy inventory stocks, and hospital billing audits.
+                            </p>
+                            <div class="mt-5 pt-4 border-t border-white/10 text-[11px] text-slate-300 space-y-2">
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Add / Modify / Remove Doctors</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Restock Pharmacy &amp; Medicine Prices</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-emerald-400 font-medium">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    <span>Audit Accounts &amp; Delete Master Data</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/10">
+                            <button class="w-full py-3 px-4 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2 group-hover:gap-3">
+                                <span>Continue as Administrator</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- STEP 2: DEDICATED ROLE PORTAL (LOG IN OR REGISTER)        -->
+            <!-- ========================================================= -->
+            <div id="gk-role-portal-view" class="hidden">
+                <!-- Navigation Bar with Back Button -->
+                <div class="flex items-center justify-between mb-6">
+                    <button type="button" onclick="backToRoleSelect()" class="inline-flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Change Role / Back to Selection</span>
+                    </button>
+                    <div id="gk-portal-role-badge" class="text-xs font-bold px-3 py-1 rounded-full border"></div>
+                </div>
+
+                <!-- Role Header Banner -->
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+                    <div class="flex items-center gap-4">
+                        <div id="gk-portal-role-icon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg"></div>
+                        <div>
+                            <h2 id="gk-portal-role-title" class="text-xl sm:text-2xl font-extrabold text-white"></h2>
+                            <p id="gk-portal-role-desc" class="text-xs sm:text-sm text-slate-300 mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs: Log In vs Register -->
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-2xl">
+                    <div class="flex border-b border-white/10 mb-5 text-xs font-bold">
+                        <button type="button" onclick="switchPortalTab('login')" id="portal-tab-login-btn" class="flex-1 py-2.5 text-teal-400 border-b-2 border-teal-400 text-center transition flex items-center justify-center gap-2">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>
+                            <span>Sign In (Existing Account)</span>
+                        </button>
+                        <button type="button" onclick="switchPortalTab('register')" id="portal-tab-register-btn" class="flex-1 py-2.5 text-slate-400 hover:text-white border-b-2 border-transparent text-center transition flex items-center justify-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span id="portal-tab-register-label">New Registration (Full Schema)</span>
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: LOG IN -->
+                    <div id="portal-login-section" class="space-y-4">
+                        <!-- Quick Account Selector from MySQL -->
+                        <div class="bg-slate-900/60 border border-white/10 rounded-xl p-4">
+                            <label class="block text-xs font-bold text-slate-200 mb-2">
+                                Quick Sign In (Select from Registered Accounts in MySQL):
+                            </label>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <select id="portal-quick-user-picker" class="flex-1 py-2.5 px-3 rounded-lg text-xs bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500">
+                                    <option value="">Loading accounts...</option>
+                                </select>
+                                <button type="button" onclick="loginWithSelectedPickerUser()" class="px-5 py-2.5 rounded-lg text-xs font-bold bg-[#148F77] hover:bg-[#107360] text-white shadow transition flex items-center justify-center gap-2">
+                                    <span>Log In Directly</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="relative flex items-center justify-center my-3">
+                            <div class="border-t border-white/10 w-full"></div>
+                            <span class="bg-[#0B1E36] px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">or sign in with password</span>
+                        </div>
+
+                        <!-- Credentials Form -->
+                        <form onsubmit="handlePortalCredentialLogin(event)" class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Username or Email</label>
+                                    <input type="text" id="portal-login-username" required placeholder="e.g. dr.sharma / rohan.verma / admin" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Password</label>
+                                    <input type="password" id="portal-login-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pt-2">
+                                <span class="text-[10px] text-slate-400">Demo passwords: <code class="text-teal-300 font-mono">doctor123</code> / <code class="text-teal-300 font-mono">patient123</code> / <code class="text-teal-300 font-mono">admin123</code></span>
+                                <button type="submit" class="px-5 py-2.5 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg transition flex items-center gap-2">
+                                    <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                                    <span>Enter Portal</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- TAB 2: REGISTER -->
+                    <div id="portal-register-section" class="hidden">
+
+                        <!-- FORM A: DOCTOR REGISTRATION -->
+                        <form id="form-register-doctor" onsubmit="handleDoctorRegistration(event)" class="space-y-4 hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Doctor Full Name *</label>
+                                    <input type="text" id="reg-doc-name" required placeholder="e.g. Dr. Rajiv Mehta" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Email Address *</label>
+                                    <input type="email" id="reg-doc-email" required placeholder="rajiv.mehta@medicare.com" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone *</label>
+                                    <input type="tel" id="reg-doc-phone" required placeholder="+91 98765 43210" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Clinical Department *</label>
+                                    <select id="reg-doc-dept" required class="w-full py-2 px-3 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                        <!-- populated dynamically from MySQL departments -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Experience (Years) *</label>
+                                    <input type="number" id="reg-doc-exp" required min="0" max="60" value="8" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Medical Specialization *</label>
+                                <input type="text" id="reg-doc-spec" required placeholder="e.g. Senior Interventional Cardiologist" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                            </div>
+
+                            <!-- OPD Availability Days -->
+                            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+                                <label class="block text-xs font-bold text-blue-300 mb-2">
+                                    OPD Consultation Days (Select Working Days):
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Monday" checked class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Monday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Tuesday" checked class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Tuesday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Wednesday" checked class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Wednesday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Thursday" checked class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Thursday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Friday" checked class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Friday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Saturday" class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Saturday</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="doc-days" value="Sunday" class="text-blue-500 rounded">
+                                        <span class="text-slate-200 text-[11px]">Sunday</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- OPD Timings -->
+                            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+                                <label class="block text-xs font-bold text-blue-300 mb-2">
+                                    OPD Shift &amp; Break Timings:
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Start Time</label>
+                                        <input type="time" id="reg-doc-start-time" value="09:00" required class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-slate-400 mb-1 font-semibold">End Time</label>
+                                        <input type="time" id="reg-doc-end-time" value="17:00" required class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Break Start</label>
+                                        <input type="time" id="reg-doc-break-start" value="13:00" required class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Break End</label>
+                                        <input type="time" id="reg-doc-break-end" value="14:00" required class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Login Credentials -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Account Username</label>
+                                    <input type="text" id="reg-doc-username" placeholder="dr.rajiv (or leave empty to auto-generate)" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Account Password</label>
+                                    <input type="password" id="reg-doc-password" value="doctor123" placeholder="••••••••" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <span class="text-[10px] text-blue-300">Saves Doctor details and OPD weekly schedules directly into MySQL</span>
+                                <button type="submit" class="px-6 py-2.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                    <span>Register Doctor in MySQL</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- FORM B: PATIENT REGISTRATION -->
+                        <form id="form-register-patient" onsubmit="handlePatientRegistration(event)" class="space-y-4 hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Patient Full Name *</label>
+                                    <input type="text" id="reg-pat-name" required placeholder="e.g. Pooja Sharma" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Email Address *</label>
+                                    <input type="email" id="reg-pat-email" required placeholder="pooja.sharma@example.com" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Contact Phone *</label>
+                                    <input type="tel" id="reg-pat-phone" required placeholder="+91 98200 12345" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Date of Birth *</label>
+                                    <input type="date" id="reg-pat-dob" required class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Gender *</label>
+                                    <select id="reg-pat-gender" required class="w-full py-2 px-3 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                                        <option value="Male">Male</option>
+                                        <option value="Female" selected>Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Residential Address *</label>
+                                <input type="text" id="reg-pat-address" required placeholder="Apartment / Society, City, State" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500">
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Account Username</label>
+                                    <input type="text" id="reg-pat-username" placeholder="pooja.s (or leave empty to auto-generate)" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Account Password</label>
+                                    <input type="password" id="reg-pat-password" value="patient123" placeholder="••••••••" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <span class="text-[10px] text-teal-300">Generates unique Patient UHID and credentials in MySQL</span>
+                                <button type="submit" class="px-6 py-2.5 rounded-lg text-xs font-bold bg-[#148F77] hover:bg-[#107360] text-white shadow-lg transition flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                    <span>Register Patient in MySQL</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- FORM C: ADMIN REGISTRATION -->
+                        <form id="form-register-admin" onsubmit="handleAdminRegistration(event)" class="space-y-4 hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Admin Full Name *</label>
+                                    <input type="text" id="reg-adm-name" required placeholder="e.g. Tanay Bhutada" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Admin Username *</label>
+                                    <input type="text" id="reg-adm-username" required placeholder="admin_tanay" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Email Address *</label>
+                                    <input type="email" id="reg-adm-email" required placeholder="admin@medicare.com" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Master Passcode / Authorization Key *</label>
+                                    <input type="password" id="reg-adm-passkey" required placeholder="Enter hospital security passkey (default: admin123)" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-purple-500">
+                                </div>
+                            </div>
+
+                            <div class="pt-1">
+                                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Set Password *</label>
+                                <input type="password" id="reg-adm-password" required value="admin123" class="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <span class="text-[10px] text-purple-300">Creates Executive Hospital Administrator user in MySQL</span>
+                                <button type="submit" class="px-6 py-2.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-lg transition flex items-center gap-2">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                    <span>Register Administrator in MySQL</span>
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="max-w-6xl w-full mx-auto text-center text-xs text-slate-500 py-3 border-t border-white/10">
+            Tanay Bhutada (2025300029) • Hiten Bohra (2025300030) • Aayush Chaudhari (2025300035) | MediCare HMS
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MAIN APPLICATION WORKSPACE -->
+    <!-- (Visible only when user is logged in) -->
+    <!-- ============================================================= -->
+    <div id="main-app-container" class="flex h-screen overflow-hidden hidden">
 
         <!-- ============================================================= -->
         <!-- LEFT SIDEBAR NAVIGATION (PPT Deep Navy & Medical Teal Theme) -->
@@ -113,11 +589,32 @@
 
                 <!-- Right Actions -->
                 <div class="flex items-center gap-3">
-                    <button onclick="openModal('modal-add-patient')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
+                    <div id="db-badge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border bg-slate-50 text-slate-600 border-slate-200" title="Database status">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="db-badge-text">Checking Database...</span>
+                    </div>
+
+                    <!-- Active User / Role Switcher Pill -->
+                    <button onclick="openModal('modal-auth-login')" id="btn-user-profile" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 transition" title="Click to switch role or login">
+                        <span id="header-user-avatar" class="w-6 h-6 rounded-full bg-[#148F77] text-white flex items-center justify-center font-bold text-[10px]">AD</span>
+                        <div class="text-left leading-tight hidden lg:block">
+                            <div id="header-user-name" class="font-semibold text-slate-800 truncate max-w-[120px]">Dr. Tanay Bhutada</div>
+                            <div id="header-user-role" class="text-[9px] text-teal-700 font-extrabold uppercase tracking-wider">ADMIN</div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+
+                    <!-- Dedicated Logout / Return to Gatekeeper Button -->
+                    <button onclick="showLoginGatekeeper()" id="btn-switch-role" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition shadow-sm" title="Exit to Role Gateway / Logout">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Logout / Switch</span>
+                    </button>
+
+                    <button onclick="openModal('modal-add-patient')" id="btn-register-patient-header" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5 text-teal-700"></i>
                         <span>Register Patient</span>
                     </button>
-                    <button onclick="openModal('modal-book-appointment')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#148F77] hover:bg-[#107360] shadow-sm transition">
+                    <button onclick="openModal('modal-book-appointment')" id="btn-book-appointment-header" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#148F77] hover:bg-[#107360] shadow-sm transition">
                         <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
                         <span>New Appointment</span>
                     </button>
@@ -144,6 +641,37 @@
                     <!-- TAB 1: OVERVIEW DASHBOARD -->
                     <!-- ===================================================== -->
                     <div id="tab-dashboard" class="tab-content space-y-6">
+                        <!-- Role-based Welcome & Quick Switch Banner -->
+                        <div id="role-welcome-banner" class="rounded-2xl p-5 bg-gradient-to-r from-[#0B192C] via-[#0E2841] to-[#148F77] text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-700/50">
+                            <div class="flex items-center gap-3.5">
+                                <div id="role-avatar-badge" class="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg shadow-inner shrink-0">
+                                    AD
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span id="role-badge-label" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-400 text-slate-900">
+                                            ACTIVE ROLE: ADMIN
+                                        </span>
+                                        <span id="role-account-type" class="text-xs text-teal-200">
+                                            • Chief Hospital Administrator
+                                        </span>
+                                    </div>
+                                    <h2 id="role-user-heading" class="text-base sm:text-lg font-bold text-white mt-1">
+                                        Welcome, Dr. Tanay Bhutada (Admin)
+                                    </h2>
+                                    <p id="role-user-desc" class="text-xs text-slate-300 mt-0.5">
+                                        You have full unrestricted administrative access across OPD, Doctors, Pharmacy, and Accounts.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button onclick="openModal('modal-auth-login')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 shadow transition">
+                                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-teal-700"></i>
+                                    <span>Switch Role (Doctor / Patient)</span>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Key Metrics Strip -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-[#148F77]">
@@ -320,7 +848,7 @@
                             <div class="flex items-center gap-1.5 flex-wrap" id="department-filter-pills">
                                 <!-- Populated via JS -->
                             </div>
-                            <button onclick="openModal('modal-add-doctor')" class="bg-[#0B192C] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shrink-0">
+                            <button onclick="openModal('modal-add-doctor')" id="btn-add-doctor" class="bg-[#0B192C] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shrink-0">
                                 <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Add Doctor
                             </button>
                         </div>
@@ -346,7 +874,7 @@
                                 <h3 class="font-bold text-slate-900 text-sm">Electronic Medical History & Case Sheets</h3>
                                 <p class="text-xs text-slate-500">Longitudinal record of diagnoses, chronic conditions, and treatment regimens</p>
                             </div>
-                            <button onclick="openModal('modal-add-history')" class="bg-[#148F77] hover:bg-[#107360] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            <button onclick="openModal('modal-add-history')" id="btn-add-history" class="bg-[#148F77] hover:bg-[#107360] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
                                 <i data-lucide="file-plus" class="w-4 h-4"></i> Add Case Record
                             </button>
                         </div>
@@ -363,7 +891,7 @@
                                 <h3 class="font-bold text-slate-900 text-sm">Issued Prescriptions (℞)</h3>
                                 <p class="text-xs text-slate-500">Medication orders linked with appointments, dosage instructions, and pharmacy dispensation</p>
                             </div>
-                            <button onclick="openModal('modal-add-prescription')" class="bg-[#148F77] hover:bg-[#107360] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            <button onclick="openModal('modal-add-prescription')" id="btn-add-prescription" class="bg-[#148F77] hover:bg-[#107360] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
                                 <i data-lucide="plus" class="w-4 h-4"></i> Issue Prescription
                             </button>
                         </div>
@@ -382,6 +910,7 @@
                                             <th class="py-3.5 px-4">Qty</th>
                                             <th class="py-3.5 px-4">Clinical Instructions</th>
                                             <th class="py-3.5 px-4">Date</th>
+                                            <th class="py-3.5 px-4 text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="prescriptions-table-body" class="divide-y divide-slate-100"></tbody>
@@ -399,7 +928,7 @@
                                 <h3 class="font-bold text-slate-900 text-sm">Hospital Pharmacy & Medicine Stock</h3>
                                 <p class="text-xs text-slate-500">Formulary stock quantities, unit pricing, and inventory replenishment</p>
                             </div>
-                            <button onclick="openModal('modal-add-medication')" class="bg-[#0B192C] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            <button onclick="openModal('modal-add-medication')" id="btn-add-medication" class="bg-[#0B192C] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
                                 <i data-lucide="plus" class="w-4 h-4"></i> Add Medicine to Stock
                             </button>
                         </div>
@@ -787,6 +1316,56 @@
         </div>
     </div>
 
+    <!-- MODAL: EDIT DOCTOR -->
+    <div id="modal-edit-doctor" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Edit Doctor Profile</h3>
+                    <p class="text-xs text-slate-500">Update doctor details directly in MySQL</p>
+                </div>
+                <button onclick="closeModal('modal-edit-doctor')" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="handleUpdateDoctor(event)" class="space-y-3.5 text-xs mt-4">
+                <input type="hidden" id="edit-doc-id">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Doctor Full Name</label>
+                    <input type="text" id="edit-doc-name" required placeholder="Dr. Siddharth Verma" class="form-input">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Official Email</label>
+                        <input type="email" id="edit-doc-email" required placeholder="s.verma@medicare.com" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                        <input type="tel" id="edit-doc-phone" required placeholder="+91 98200 55443" class="form-input">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Department</label>
+                        <select id="edit-doc-dept" required class="form-input bg-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Years of Experience</label>
+                        <input type="number" id="edit-doc-exp" required min="0" placeholder="12" class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Specialization Qualification</label>
+                    <input type="text" id="edit-doc-spec" required placeholder="e.g. MD, DM Cardiology" class="form-input">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-edit-doctor')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
+                    <button type="submit" class="bg-[#148F77] hover:bg-[#107360] text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Update Doctor in MySQL
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL: SETTLE INVOICE -->
     <div id="modal-pay-bill" class="modal-backdrop hidden">
         <div class="modal-card max-w-md">
@@ -853,6 +1432,88 @@
                 <button onclick="closeModal('modal-patient-details')" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div id="patient-details-content" class="mt-4 space-y-5 text-xs"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: ROLE LOGIN & SWITCHER -->
+    <div id="modal-auth-login" class="modal-backdrop hidden">
+        <div class="modal-card max-w-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">User Login & Role Switcher</h3>
+                        <p class="text-xs text-slate-500">Switch between Admin, Doctor, and Patient access for testing & viva presentation</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-auth-login')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-5">
+                <!-- Section 1: 1-Click Fast Switcher -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                            1-Click Fast Switch (Recommended for Demo)
+                        </span>
+                        <span class="text-[11px] text-slate-400">Click any card to instantly log in</span>
+                    </div>
+
+                    <!-- Filter pills for roles -->
+                    <div class="flex gap-1.5 mb-3">
+                        <button onclick="filterAuthCards('all')" id="auth-pill-all" class="auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-[#0B192C] text-white">All Accounts</button>
+                        <button onclick="filterAuthCards('admin')" id="auth-pill-admin" class="auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Admin</button>
+                        <button onclick="filterAuthCards('doctor')" id="auth-pill-doctor" class="auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Doctors</button>
+                        <button onclick="filterAuthCards('patient')" id="auth-pill-patient" class="auth-role-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Patients</button>
+                    </div>
+
+                    <!-- Dynamic Card Grid -->
+                    <div id="auth-quick-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto p-0.5">
+                        <div class="text-center py-6 text-slate-400 text-xs">Loading user accounts...</div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-400 font-semibold">Or Sign In with Credentials</span></div>
+                </div>
+
+                <!-- Section 2: Standard Username / Password Login -->
+                <form id="form-auth-login" onsubmit="handleLoginForm(event)" class="space-y-3.5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Username or Email</label>
+                            <input type="text" id="auth-input-username" required placeholder="e.g. admin or dr.sharma" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                            <input type="password" id="auth-input-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-600">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span class="font-semibold text-slate-700">Default passwords:</span>
+                            <span class="font-mono text-teal-800 ml-1">admin123</span> / <span class="font-mono text-teal-800">doctor123</span> / <span class="font-mono text-teal-800">patient123</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="logoutUser()" class="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition">
+                                Reset to Default
+                            </button>
+                            <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-[#148F77] hover:bg-[#107360] rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
+                                <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                                <span>Sign In</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -71,8 +71,12 @@ code, pre, .font-mono {
     animation: fadeIn 0.15s ease-out forwards;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .modal-backdrop.hidden {
-    display: none;
+    display: none !important;
 }
 
 .modal-card {
