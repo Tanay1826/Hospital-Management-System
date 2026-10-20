@@ -630,9 +630,36 @@ function applyRolePermissions() {
         if (btnMyPrescriptionsHeader) btnMyPrescriptionsHeader.classList.add('hidden');
     }
 
+    // 7. Appointment Scope Configuration (Doctors see their own patients by default)
+    const apptScopeContainer = document.getElementById('appt-scope-container');
+    const scopeBtnMy = document.getElementById('scope-appt-MY');
+    const scopeBtnAll = document.getElementById('scope-appt-ALL');
+    const scopeMyLabel = document.getElementById('scope-appt-my-label');
+
+    if (role === 'doctor') {
+        activeApptScope = 'MY';
+        dashboardDoctorScope = 'MY';
+        if (apptScopeContainer) apptScopeContainer.classList.remove('hidden');
+        if (scopeMyLabel) scopeMyLabel.textContent = 'My Patients Only';
+        if (scopeBtnMy) scopeBtnMy.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-bold text-xs bg-teal-700 text-white shadow-sm flex items-center gap-1.5 transition';
+        if (scopeBtnAll) scopeBtnAll.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition';
+    } else if (role === 'patient') {
+        activeApptScope = 'MY';
+        dashboardDoctorScope = 'MY';
+        if (apptScopeContainer) apptScopeContainer.classList.add('hidden');
+    } else {
+        // Admin default: all appointments
+        activeApptScope = 'ALL';
+        dashboardDoctorScope = 'ALL';
+        if (apptScopeContainer) apptScopeContainer.classList.remove('hidden');
+        if (scopeMyLabel) scopeMyLabel.textContent = 'My Patients';
+        if (scopeBtnMy) scopeBtnMy.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition';
+        if (scopeBtnAll) scopeBtnAll.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-bold text-xs bg-teal-700 text-white shadow-sm flex items-center gap-1.5 transition';
+    }
+
     // Re-render UI grids & tables with active role permissions applied
     if (cachedDoctors && cachedDoctors.length > 0) renderDoctorsGrid();
-    if (cachedAppointments && cachedAppointments.length > 0) renderAppointments(cachedAppointments);
+    if (cachedAppointments && cachedAppointments.length > 0) renderAppointments(getFilteredAppointments());
     if (cachedPatients && cachedPatients.length > 0) renderPatients(cachedPatients);
     if (cachedMedications && cachedMedications.length > 0) renderMedicationsTable();
     if (cachedBilling && cachedBilling.length > 0) renderBilling(cachedBilling);
@@ -908,10 +935,70 @@ async function loadDashboardData() {
         const apptRes = await fetch('/api/appointments');
         const apptJson = await apptRes.json();
         if (apptJson.success) {
-            const list = apptJson.data.slice(0, 6);
+            const allAppts = apptJson.data || [];
+            let displayList = allAppts;
+            const titleEl = document.getElementById('dashboard-queue-title');
+            const subTitleEl = document.getElementById('dashboard-queue-subtitle');
+            const toggleBtn = document.getElementById('dashboard-queue-toggle');
+            const toggleText = document.getElementById('dashboard-queue-toggle-text');
+
+            if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
+                const docId = Number(currentUser.doctor_id);
+                const myAppts = allAppts.filter(a => Number(a.doctor_id) === docId);
+                const scheduledCount = myAppts.filter(a => a.status === 'Scheduled').length;
+
+                // Adjust dashboard stat card specifically for this Doctor
+                const apptStatEl = document.getElementById('stat-appointments');
+                const pendingStatEl = document.getElementById('stat-pending-appt');
+                if (apptStatEl) apptStatEl.textContent = myAppts.length;
+                if (pendingStatEl) pendingStatEl.textContent = `${scheduledCount} Scheduled for You`;
+
+                if (toggleBtn) toggleBtn.classList.remove('hidden');
+
+                if (dashboardDoctorScope === 'MY') {
+                    displayList = myAppts;
+                    if (titleEl) titleEl.textContent = `🩺 Your OPD Consultation Queue (${currentUser.full_name})`;
+                    if (subTitleEl) subTitleEl.textContent = `Showing only patients scheduled with you (${myAppts.length} total, ${scheduledCount} upcoming)`;
+                    if (toggleText) toggleText.textContent = `View All Hospital (${allAppts.length})`;
+                } else {
+                    displayList = allAppts;
+                    if (titleEl) titleEl.textContent = `🏥 All Hospital OPD Consultations`;
+                    if (subTitleEl) subTitleEl.textContent = `Hospital-wide queue across all department specialists`;
+                    if (toggleText) toggleText.textContent = `Show My Patients Only (${myAppts.length})`;
+                }
+            } else if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+                const patId = Number(currentUser.patient_id);
+                const myAppts = allAppts.filter(a => Number(a.patient_id) === patId);
+                displayList = myAppts;
+
+                const apptStatEl = document.getElementById('stat-appointments');
+                const pendingStatEl = document.getElementById('stat-pending-appt');
+                if (apptStatEl) apptStatEl.textContent = myAppts.length;
+                if (pendingStatEl) pendingStatEl.textContent = `${myAppts.filter(a => a.status === 'Scheduled').length} Upcoming Visits`;
+
+                if (titleEl) titleEl.textContent = `Your Scheduled Consultations`;
+                if (subTitleEl) subTitleEl.textContent = `Your outpatient bookings and past medical visits`;
+                if (toggleBtn) toggleBtn.classList.add('hidden');
+            } else {
+                // Admin
+                if (titleEl) titleEl.textContent = `Outpatient (OPD) Consultation Queue`;
+                if (subTitleEl) subTitleEl.textContent = `Upcoming and recently completed patient visits`;
+                if (toggleBtn) toggleBtn.classList.add('hidden');
+            }
+
+            const list = displayList.slice(0, 6);
             const tbody = document.getElementById('dashboard-recent-appointments');
+            if (!tbody) return;
+
             if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">No appointments booked yet.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">
+                    <p class="font-medium text-slate-500">No appointments found in this view.</p>
+                    ${(currentUser && currentUser.role === 'doctor' && dashboardDoctorScope === 'MY') ? `
+                        <button onclick="toggleDashboardDoctorScope()" class="text-xs text-teal-700 font-bold hover:underline mt-1">
+                            Click here to see all hospital bookings &rarr;
+                        </button>
+                    ` : ''}
+                </td></tr>`;
             } else {
                 tbody.innerHTML = list.map(a => `
                     <tr class="hover:bg-slate-50/80 transition">
@@ -1487,13 +1574,85 @@ async function deleteDoctor(id) {
 // =====================================================================
 // 4. APPOINTMENTS
 // =====================================================================
+// Appointment Role-Based Scoping & Filter State
+let activeApptStatusFilter = 'ALL';
+let activeApptScope = 'MY';
+let dashboardDoctorScope = 'MY';
+
+function getFilteredAppointments() {
+    let appts = [...cachedAppointments];
+    
+    // 1. Role Scope Filter
+    if (currentUser) {
+        const role = (currentUser.role || '').toLowerCase();
+        if (role === 'doctor') {
+            if (activeApptScope === 'MY' && currentUser.doctor_id) {
+                appts = appts.filter(a => Number(a.doctor_id) === Number(currentUser.doctor_id));
+            }
+        } else if (role === 'patient') {
+            // Patients always see only their own appointments for medical privacy
+            if (currentUser.patient_id) {
+                appts = appts.filter(a => Number(a.patient_id) === Number(currentUser.patient_id));
+            }
+        } else if (role === 'admin') {
+            if (activeApptScope === 'MY' && currentUser.doctor_id) {
+                appts = appts.filter(a => Number(a.doctor_id) === Number(currentUser.doctor_id));
+            }
+        }
+    }
+
+    // 2. Status Filter
+    if (activeApptStatusFilter !== 'ALL') {
+        appts = appts.filter(a => a.status === activeApptStatusFilter);
+    }
+
+    return appts;
+}
+
+function setAppointmentScope(scope) {
+    activeApptScope = scope;
+    const btnMy = document.getElementById('scope-appt-MY');
+    const btnAll = document.getElementById('scope-appt-ALL');
+
+    if (btnMy && btnAll) {
+        if (scope === 'MY') {
+            btnMy.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-bold text-xs bg-teal-700 text-white shadow-sm flex items-center gap-1.5 transition';
+            btnAll.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition';
+        } else {
+            btnMy.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-medium text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition';
+            btnAll.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-bold text-xs bg-teal-700 text-white shadow-sm flex items-center gap-1.5 transition';
+        }
+    }
+
+    renderAppointments(getFilteredAppointments());
+    lucide.createIcons();
+}
+
+function setAppointmentFilter(status) {
+    activeApptStatusFilter = status;
+    document.querySelectorAll('.appt-filter-btn').forEach(btn => {
+        btn.className = 'appt-filter-btn px-3 py-1.5 rounded-md font-medium text-slate-600 hover:text-slate-900';
+    });
+    const activeBtn = document.getElementById(`filter-appt-${status}`);
+    if (activeBtn) {
+        activeBtn.className = 'appt-filter-btn active px-3 py-1.5 rounded-md font-semibold bg-white text-slate-900 shadow-sm';
+    }
+
+    renderAppointments(getFilteredAppointments());
+}
+
+function toggleDashboardDoctorScope() {
+    dashboardDoctorScope = (dashboardDoctorScope === 'MY') ? 'ALL' : 'MY';
+    loadDashboardData();
+}
+
 async function loadAppointments() {
     try {
         const res = await fetch('/api/appointments');
         const json = await res.json();
         if (json.success) {
             cachedAppointments = json.data;
-            renderAppointments(cachedAppointments);
+            renderAppointments(getFilteredAppointments());
         }
     } catch (err) {
         console.error('Error loading appointments:', err);
@@ -1502,8 +1661,24 @@ async function loadAppointments() {
 
 function renderAppointments(appts) {
     const tbody = document.getElementById('appointments-table-body');
-    if (appts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">No appointments found for the selected filter.</td></tr>';
+    if (!tbody) return;
+
+    if (!appts || appts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="p-8 text-center text-slate-400">
+                    <div class="max-w-xs mx-auto space-y-2">
+                        <i data-lucide="calendar-x-2" class="w-8 h-8 mx-auto text-slate-300"></i>
+                        <p class="font-medium text-slate-600 text-xs">No appointments found for this filter or scope.</p>
+                        ${currentUser && currentUser.role === 'doctor' && activeApptScope === 'MY' ? `
+                            <button onclick="setAppointmentScope('ALL')" class="text-xs text-teal-700 font-bold hover:underline">
+                                View all hospital appointments &rarr;
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        lucide.createIcons();
         return;
     }
 
@@ -1563,22 +1738,7 @@ function renderAppointments(appts) {
         </tr>
     `;
     }).join('');
-}
-
-function setAppointmentFilter(status) {
-    document.querySelectorAll('.appt-filter-btn').forEach(btn => {
-        btn.className = 'appt-filter-btn px-3 py-1.5 rounded-md font-medium text-slate-600 hover:text-slate-900';
-    });
-    const activeBtn = document.getElementById(`filter-appt-${status}`);
-    if (activeBtn) {
-        activeBtn.className = 'appt-filter-btn active px-3 py-1.5 rounded-md font-semibold bg-white text-slate-900 shadow-sm';
-    }
-
-    if (status === 'ALL') {
-        renderAppointments(cachedAppointments);
-    } else {
-        renderAppointments(cachedAppointments.filter(a => a.status === status));
-    }
+    lucide.createIcons();
 }
 
 async function handleBookAppointment(e) {
