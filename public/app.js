@@ -25,6 +25,12 @@ function apiFetch(url, options = {}) {
     }
     const role = (currentUser && currentUser.role) ? currentUser.role : 'patient';
     opts.headers['x-user-role'] = role;
+    if (currentUser && currentUser.doctor_id) {
+        opts.headers['x-user-doctor-id'] = String(currentUser.doctor_id);
+    }
+    if (currentUser && currentUser.patient_id) {
+        opts.headers['x-user-patient-id'] = String(currentUser.patient_id);
+    }
     return fetch(url, opts);
 }
 
@@ -612,38 +618,78 @@ function applyRolePermissions() {
         if (hubBadgeDoctor) hubBadgeDoctor.textContent = role === 'doctor' ? 'OPD SCHEDULE' : 'SPECIALISTS';
     }
 
-    // 4. Clinical Case Records (Diagnoses): Doctor & Admin ONLY (Patients CANNOT diagnose)
+    // 4. Clinical Case Records (Diagnoses): Doctor & Patient ONLY (Strictly Hidden from Admin)
+    const navHistory = document.getElementById('nav-history');
+    const topbarNavHistory = document.getElementById('topbar-nav-history');
+    const hubCardHistory = document.getElementById('hub-card-history');
     const btnAddHistory = document.getElementById('btn-add-history');
     const btnAddHistoryHeader = document.getElementById('btn-add-history-header');
     const hubBtnAddHistory = document.getElementById('hub-btn-add-history');
     const hubBadgeHistory = document.getElementById('hub-badge-history');
-    if (role === 'patient') {
+
+    if (role === 'admin') {
+        // Admin has NO ACCESS to clinical histories
+        if (navHistory) navHistory.classList.add('hidden');
+        if (topbarNavHistory) topbarNavHistory.classList.add('hidden');
+        if (hubCardHistory) hubCardHistory.classList.add('hidden');
         if (btnAddHistory) btnAddHistory.classList.add('hidden');
         if (btnAddHistoryHeader) btnAddHistoryHeader.classList.add('hidden');
         if (hubBtnAddHistory) hubBtnAddHistory.classList.add('hidden');
-        if (hubBadgeHistory) hubBadgeHistory.textContent = 'MY HISTORY';
-    } else {
+    } else if (role === 'doctor') {
+        // Doctor can view their patients' histories and add case records
+        if (navHistory) navHistory.classList.remove('hidden');
+        if (topbarNavHistory) topbarNavHistory.classList.remove('hidden');
+        if (hubCardHistory) hubCardHistory.classList.remove('hidden');
         if (btnAddHistory) btnAddHistory.classList.remove('hidden');
         if (btnAddHistoryHeader) btnAddHistoryHeader.classList.remove('hidden');
         if (hubBtnAddHistory) hubBtnAddHistory.classList.remove('hidden');
         if (hubBadgeHistory) hubBadgeHistory.textContent = 'CLINICAL CARE';
+    } else {
+        // Patient can view their own medical history, but CANNOT add new records
+        if (navHistory) navHistory.classList.remove('hidden');
+        if (topbarNavHistory) topbarNavHistory.classList.remove('hidden');
+        if (hubCardHistory) hubCardHistory.classList.remove('hidden');
+        if (btnAddHistory) btnAddHistory.classList.add('hidden');
+        if (btnAddHistoryHeader) btnAddHistoryHeader.classList.add('hidden');
+        if (hubBtnAddHistory) hubBtnAddHistory.classList.add('hidden');
+        if (hubBadgeHistory) hubBadgeHistory.textContent = 'MY HISTORY';
     }
 
-    // 5. Prescriptions (Rx): Doctor & Admin ONLY (Patients CANNOT prescribe)
+    // 5. Prescriptions (Rx): Doctor & Patient ONLY (Strictly Hidden from Admin)
+    const navPrescriptions = document.getElementById('nav-prescriptions');
+    const topbarNavPrescriptions = document.getElementById('topbar-nav-prescriptions');
+    const hubCardPrescriptions = document.getElementById('hub-card-prescriptions');
     const btnAddPrescription = document.getElementById('btn-add-prescription');
     const btnAddPrescriptionHeader = document.getElementById('btn-add-prescription-header');
     const hubBtnAddPrescription = document.getElementById('hub-btn-add-prescription');
     const hubBadgePrescriptions = document.getElementById('hub-badge-prescriptions');
-    if (role === 'patient') {
+
+    if (role === 'admin') {
+        // Admin has NO ACCESS to prescriptions
+        if (navPrescriptions) navPrescriptions.classList.add('hidden');
+        if (topbarNavPrescriptions) topbarNavPrescriptions.classList.add('hidden');
+        if (hubCardPrescriptions) hubCardPrescriptions.classList.add('hidden');
         if (btnAddPrescription) btnAddPrescription.classList.add('hidden');
         if (btnAddPrescriptionHeader) btnAddPrescriptionHeader.classList.add('hidden');
         if (hubBtnAddPrescription) hubBtnAddPrescription.classList.add('hidden');
-        if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'MY RX (VIEW)';
-    } else {
+    } else if (role === 'doctor') {
+        // Doctor can view issued prescriptions and issue new Rx
+        if (navPrescriptions) navPrescriptions.classList.remove('hidden');
+        if (topbarNavPrescriptions) topbarNavPrescriptions.classList.remove('hidden');
+        if (hubCardPrescriptions) hubCardPrescriptions.classList.remove('hidden');
         if (btnAddPrescription) btnAddPrescription.classList.remove('hidden');
         if (btnAddPrescriptionHeader) btnAddPrescriptionHeader.classList.remove('hidden');
         if (hubBtnAddPrescription) hubBtnAddPrescription.classList.remove('hidden');
         if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'ISSUE RX';
+    } else {
+        // Patient can view their own prescriptions, cannot issue
+        if (navPrescriptions) navPrescriptions.classList.remove('hidden');
+        if (topbarNavPrescriptions) topbarNavPrescriptions.classList.remove('hidden');
+        if (hubCardPrescriptions) hubCardPrescriptions.classList.remove('hidden');
+        if (btnAddPrescription) btnAddPrescription.classList.add('hidden');
+        if (btnAddPrescriptionHeader) btnAddPrescriptionHeader.classList.add('hidden');
+        if (hubBtnAddPrescription) hubBtnAddPrescription.classList.add('hidden');
+        if (hubBadgePrescriptions) hubBadgePrescriptions.textContent = 'MY RX (VIEW)';
     }
 
     // 6. Patient Registration from Header & Hub: Staff/Admin & Doctor only (not patient)
@@ -676,7 +722,7 @@ function applyRolePermissions() {
         } else if (role === 'doctor') {
             moduleCounter.textContent = '7 Active Modules';
         } else {
-            moduleCounter.textContent = '8 Active Modules';
+            moduleCounter.textContent = '6 Active Modules'; // Admin: 6 modules (History & Prescriptions excluded)
         }
     }
 
@@ -941,6 +987,11 @@ function switchTab(tabId) {
         }
         if ((role === 'patient' || role === 'doctor') && tabId === 'pharmacy') {
             showToast('Pharmacy Inventory is restricted to Hospital Administration', 'warning');
+            switchTab('dashboard');
+            return;
+        }
+        if (role === 'admin' && (tabId === 'history' || tabId === 'prescriptions')) {
+            showToast('Access Restricted: Medical histories and Prescriptions are strictly confidential between attending Doctor and Patient.', 'warning');
             switchTab('dashboard');
             return;
         }
@@ -1979,19 +2030,45 @@ async function deleteAppointment(id) {
 // =====================================================================
 async function loadMedicalHistory() {
     try {
-        const res = await fetch('/api/medical-history');
+        const container = document.getElementById('medical-history-cards');
+        if (!container) return;
+
+        // Confidentiality Rule 1: Administrator has NO access to medical histories
+        if (currentUser && currentUser.role === 'admin') {
+            container.innerHTML = `
+                <div class="p-8 text-amber-800 bg-amber-50 border border-amber-200 rounded-xl text-center col-span-2 space-y-2">
+                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-700">
+                        <i data-lucide="lock" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="font-bold text-sm">Confidential Clinical Information</h4>
+                    <p class="text-xs text-amber-700 max-w-md mx-auto">
+                        Patient medical history case records are private and restricted exclusively to the attending Doctor and Patient.
+                    </p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        const res = await apiFetch('/api/medical-history');
         const json = await res.json();
         if (json.success) {
-            const container = document.getElementById('medical-history-cards');
             let records = json.data || [];
+            
+            // Confidentiality Rule 2: Scoped strictly to attending Doctor B and Patient A
             if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
                 const myPatId = Number(currentUser.patient_id);
                 records = records.filter(m => Number(m.patient_id) === myPatId);
+            } else if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
+                const myDocId = Number(currentUser.doctor_id);
+                records = records.filter(m => Number(m.doctor_id) === myDocId);
             }
 
             if (records.length === 0) {
                 const emptyMsg = (currentUser && currentUser.role === 'patient')
                     ? 'No clinical case history recorded for your profile yet.'
+                    : (currentUser && currentUser.role === 'doctor')
+                    ? 'No clinical case notes recorded for your consultations yet.'
                     : 'No clinical case records documented yet.';
                 container.innerHTML = `<div class="p-8 text-slate-400 text-center col-span-2">${emptyMsg}</div>`;
                 return;
@@ -2007,12 +2084,12 @@ async function loadMedicalHistory() {
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-900 text-sm">${m.patient_name}</h4>
-                                    <span class="text-[11px] text-slate-400">Consulted ${m.doctor_name} (${m.department_name})</span>
+                                    <span class="text-[11px] text-slate-400">Attended by Dr. ${m.doctor_name} (${m.department_name})</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="font-mono text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${m.record_date}</span>
-                                ${(currentUser && currentUser.role === 'admin') ? `
+                                ${(currentUser && currentUser.role === 'doctor' && Number(currentUser.doctor_id) === Number(m.doctor_id)) ? `
                                 <button onclick="deleteMedicalHistory(${m.history_id})" class="text-slate-400 hover:text-rose-600 p-1 rounded transition" title="Delete Case Note">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
@@ -2022,12 +2099,12 @@ async function loadMedicalHistory() {
 
                         <div class="mt-3 space-y-2 text-xs">
                             <div>
-                                <span class="text-slate-400 font-medium block text-[10px] uppercase tracking-wider">Primary Diagnosis</span>
+                                <span class="text-slate-400 font-medium block text-[10px] uppercase tracking-wider">Clinical Diagnosis</span>
                                 <span class="font-bold text-slate-900 text-sm">${m.diagnosis}</span>
                             </div>
                             <div>
-                                <span class="text-slate-400 font-medium block text-[10px] uppercase tracking-wider">Presenting Conditions</span>
-                                <span class="text-slate-700">${m.conditions}</span>
+                                <span class="text-slate-400 font-medium block text-[10px] uppercase tracking-wider">Presenting Symptoms / Chronic Ailments (Sugar, Asthma, Surgical Needs)</span>
+                                <span class="text-slate-700 font-medium">${m.conditions}</span>
                             </div>
                             <div>
                                 <span class="text-slate-400 font-medium block text-[10px] uppercase tracking-wider">Treatment Protocol</span>
@@ -2038,7 +2115,7 @@ async function loadMedicalHistory() {
 
                     ${m.notes ? `
                         <div class="p-2.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-600 text-[11px]">
-                            <strong class="text-slate-700">Physician Note:</strong> ${m.notes}
+                            <strong class="text-slate-700">Attending Physician Note:</strong> ${m.notes}
                         </div>
                     ` : ''}
                 </div>
@@ -2051,8 +2128,8 @@ async function loadMedicalHistory() {
 }
 
 async function deleteMedicalHistory(id) {
-    if (!currentUser || currentUser.role !== 'admin') {
-        return showToast('Permission Denied: Only Admin can delete clinical case notes from MySQL.', 'error');
+    if (!currentUser || currentUser.role !== 'doctor') {
+        return showToast('Permission Denied: Only attending Doctors can manage their clinical case notes.', 'error');
     }
     if (!confirm('Remove this clinical case note from MySQL?')) return;
     try {
@@ -2071,12 +2148,12 @@ async function deleteMedicalHistory(id) {
 
 async function handleCreateHistory(e) {
     e.preventDefault();
-    if (currentUser && currentUser.role === 'patient') {
-        return showToast('Permission Denied: Patients cannot document diagnoses or case sheets.', 'error');
+    if (!currentUser || currentUser.role !== 'doctor') {
+        return showToast('Permission Denied: Only attending Doctors can document clinical case sheets.', 'error');
     }
     const data = {
         patient_id: document.getElementById('history-patient-select').value,
-        doctor_id: document.getElementById('history-doctor-select').value,
+        doctor_id: currentUser.doctor_id ? currentUser.doctor_id : document.getElementById('history-doctor-select').value,
         record_date: document.getElementById('history-date').value,
         conditions: document.getElementById('history-conditions').value.trim(),
         diagnosis: document.getElementById('history-diagnosis').value.trim(),
@@ -2240,19 +2317,34 @@ async function deleteMedication(id) {
 // =====================================================================
 async function loadPrescriptions() {
     try {
-        const res = await fetch('/api/prescriptions');
+        const tbody = document.getElementById('prescriptions-table-body');
+        if (!tbody) return;
+
+        // Confidentiality Rule 1: Administrator has NO access to prescriptions
+        if (currentUser && currentUser.role === 'admin') {
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-amber-800 bg-amber-50 font-semibold">🔒 Prescriptions Confidential: Prescription records are private between the prescribing Doctor and Patient.</td></tr>`;
+            return;
+        }
+
+        const res = await apiFetch('/api/prescriptions');
         const json = await res.json();
         if (json.success) {
-            const tbody = document.getElementById('prescriptions-table-body');
             let records = json.data || [];
+            
+            // Confidentiality Rule 2: Scoped strictly to prescribing Doctor B and Patient A
             if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
                 const myPatId = Number(currentUser.patient_id);
                 records = records.filter(pr => Number(pr.patient_id) === myPatId);
+            } else if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
+                const myDocId = Number(currentUser.doctor_id);
+                records = records.filter(pr => Number(pr.doctor_id) === myDocId);
             }
 
             if (records.length === 0) {
                 const emptyMsg = (currentUser && currentUser.role === 'patient')
                     ? 'No active prescriptions issued for your profile yet.'
+                    : (currentUser && currentUser.role === 'doctor')
+                    ? 'No prescriptions issued by you yet.'
                     : 'No prescriptions issued yet.';
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400">${emptyMsg}</td></tr>`;
                 return;
@@ -2262,7 +2354,7 @@ async function loadPrescriptions() {
                 <tr class="hover:bg-slate-50/80 transition">
                     <td class="py-3.5 px-4 font-mono font-semibold text-teal-700">Rx-${200 + pr.prescription_id}</td>
                     <td class="py-3.5 px-4 font-bold text-slate-900">${pr.patient_name}</td>
-                    <td class="py-3.5 px-4 text-slate-700">${pr.doctor_name}</td>
+                    <td class="py-3.5 px-4 text-slate-700">Dr. ${pr.doctor_name}</td>
                     <td class="py-3.5 px-4">
                         <span class="font-bold text-slate-900">${pr.medicine_name}</span>
                         <span class="text-[11px] text-slate-400 block">${pr.medicine_type}</span>
@@ -2276,7 +2368,7 @@ async function loadPrescriptions() {
                     <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${pr.instructions || ''}">${pr.instructions || 'As directed'}</td>
                     <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${pr.prescribed_date}</td>
                     <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                        ${(currentUser && currentUser.role !== 'patient') ? `
+                        ${(currentUser && currentUser.role === 'doctor' && Number(currentUser.doctor_id) === Number(pr.doctor_id)) ? `
                         <button onclick="deletePrescription(${pr.prescription_id})" class="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-1 rounded-md text-[11px] font-semibold transition" title="Cancel prescription and restore stock">
                             Cancel Rx
                         </button>
@@ -2293,8 +2385,8 @@ async function loadPrescriptions() {
 }
 
 async function deletePrescription(id) {
-    if (currentUser && currentUser.role === 'patient') {
-        return showToast('Permission Denied: Patients cannot cancel clinical prescriptions.', 'error');
+    if (!currentUser || currentUser.role !== 'doctor') {
+        return showToast('Permission Denied: Only prescribing Doctors can cancel clinical prescriptions.', 'error');
     }
     if (!confirm('Cancel this prescription? Medicine stock will be restored and appointment billing adjusted.')) return;
     try {
@@ -2316,12 +2408,12 @@ async function deletePrescription(id) {
 
 async function handleCreatePrescription(e) {
     e.preventDefault();
-    if (currentUser && currentUser.role === 'patient') {
-        return showToast('Permission Denied: Patients cannot issue medical prescriptions.', 'error');
+    if (!currentUser || currentUser.role !== 'doctor') {
+        return showToast('Permission Denied: Only attending Doctors can issue clinical prescriptions.', 'error');
     }
     const data = {
         appointment_id: parseInt(document.getElementById('presc-appt-select').value),
-        doctor_id: parseInt(document.getElementById('presc-doctor-select').value),
+        doctor_id: currentUser.doctor_id ? parseInt(currentUser.doctor_id, 10) : parseInt(document.getElementById('presc-doctor-select').value),
         medication_id: parseInt(document.getElementById('presc-med-select').value),
         dosage: document.getElementById('presc-dosage').value.trim(),
         frequency: document.getElementById('presc-freq').value.trim(),
@@ -2357,7 +2449,7 @@ async function handleCreatePrescription(e) {
 // =====================================================================
 async function loadBilling() {
     try {
-        const res = await fetch('/api/billing');
+        const res = await apiFetch('/api/billing');
         const json = await res.json();
         if (json.success) {
             cachedBilling = json.data;
@@ -2391,7 +2483,7 @@ function renderBilling(bills) {
         <tr class="hover:bg-slate-50/80 transition">
             <td class="py-3.5 px-4 font-mono font-semibold text-slate-500">INV-${1000 + b.bill_id}</td>
             <td class="py-3.5 px-4 font-bold text-slate-900">${b.patient_name}</td>
-            <td class="py-3.5 px-4 text-slate-600">${b.doctor_name}</td>
+            <td class="py-3.5 px-4 text-slate-600">Dr. ${b.doctor_name}</td>
             <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${b.bill_date}</td>
             <td class="py-3.5 px-4 font-bold text-slate-900 font-mono text-sm">₹${formatCurrency(b.total_amount)}</td>
             <td class="py-3.5 px-4"><span class="badge-status badge-${b.payment_status}">${b.payment_status}</span></td>
@@ -2400,12 +2492,14 @@ function renderBilling(bills) {
             </td>
             <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 ${b.payment_status === 'Pending' ? `
-                    ${isDoctor ? `
-                        <span class="text-amber-600 font-semibold text-[11px] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">Payment Due</span>
+                    ${isPatient ? `
+                        <span class="text-amber-700 font-semibold text-xs bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md inline-flex items-center gap-1 shadow-sm">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> Payment Due (Pay at Desk)
+                        </span>
                     ` : `
-                        <button onclick="openPayBillModal(${b.bill_id}, '${b.patient_name}', ${b.total_amount})" class="${isPatient ? 'bg-teal-600 hover:bg-teal-500' : 'bg-[#148F77] hover:bg-[#107360]'} text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5">
-                            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
-                            <span>${isPatient ? 'Pay Bill Online' : 'Collect Payment'}</span>
+                        <button onclick="openPayBillModal(${b.bill_id}, '${b.patient_name.replace(/'/g, "\\'")}', ${b.total_amount})" class="bg-[#148F77] hover:bg-[#107360] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            <span>Mark as Paid / Collect</span>
                         </button>
                     `}
                 ` : `
@@ -2433,6 +2527,10 @@ function filterBilling(status) {
 }
 
 function openPayBillModal(billId, patientName, amount) {
+    if (currentUser && currentUser.role === 'patient') {
+        showToast('Permission Denied: Invoices must be collected or marked as paid by Administrator or Doctor.', 'error');
+        return;
+    }
     document.getElementById('pay-bill-id').value = billId;
     document.getElementById('pay-display-id').textContent = `INV-${1000 + billId}`;
     document.getElementById('pay-display-patient').textContent = patientName;
@@ -2442,6 +2540,11 @@ function openPayBillModal(billId, patientName, amount) {
 
 async function handlePayBill(e) {
     e.preventDefault();
+    if (currentUser && currentUser.role === 'patient') {
+        showToast('Permission Denied: Patients cannot settle their own billing invoices.', 'error');
+        closeModal('modal-pay-bill');
+        return;
+    }
     const id = document.getElementById('pay-bill-id').value;
     const payment_mode = document.getElementById('pay-payment-mode').value;
 
@@ -2567,7 +2670,11 @@ function populateSelectDropdowns() {
     const prescMedEl = document.getElementById('presc-med-select');
     if (prescMedEl) prescMedEl.innerHTML = medOptions;
 
-    const apptOptions = cachedAppointments.map(a => `<option value="${a.appointment_id}">APT-${100 + a.appointment_id} • ${a.patient_name} (${a.doctor_name})</option>`).join('');
+    let apptList = cachedAppointments;
+    if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
+        apptList = cachedAppointments.filter(a => Number(a.doctor_id) === Number(currentUser.doctor_id));
+    }
+    const apptOptions = apptList.map(a => `<option value="${a.appointment_id}">APT-${100 + a.appointment_id} • ${a.patient_name} (${a.appointment_date})</option>`).join('');
     const prescApptEl = document.getElementById('presc-appt-select');
     if (prescApptEl) prescApptEl.innerHTML = apptOptions;
 
@@ -2581,9 +2688,20 @@ function populateSelectDropdowns() {
     if (currentUser && currentUser.role === 'doctor' && currentUser.doctor_id) {
         ['appt-doctor-select', 'history-doctor-select', 'presc-doctor-select'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = currentUser.doctor_id;
+            if (el) {
+                el.value = currentUser.doctor_id;
+                if (id === 'history-doctor-select' || id === 'presc-doctor-select') {
+                    el.disabled = true;
+                }
+            }
         });
-    } else if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
+    } else {
+        ['history-doctor-select', 'presc-doctor-select'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+    }
+    if (currentUser && currentUser.role === 'patient' && currentUser.patient_id) {
         ['appt-patient-select', 'history-patient-select'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = currentUser.patient_id;

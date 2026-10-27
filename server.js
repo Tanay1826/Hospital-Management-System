@@ -760,21 +760,41 @@ app.delete('/api/appointments/:id', requireRole(['admin']), async (req, res) => 
 // =====================================================================
 app.get('/api/medical-history', async (req, res) => {
     try {
-        const rows = await query(`
+        const userRole = (req.headers['x-user-role'] || req.query.role || '').toLowerCase();
+        // Administrator has NO ACCESS to confidential clinical case histories
+        if (userRole === 'admin') {
+            return res.json({ success: true, data: [] });
+        }
+
+        const doctorId = req.headers['x-user-doctor-id'] || req.query.doctor_id;
+        const patientId = req.headers['x-user-patient-id'] || req.query.patient_id;
+
+        let sql = `
             SELECT m.*, p.name AS patient_name, d.name AS doctor_name, dept.department_name
             FROM medical_history m
             JOIN patients p ON m.patient_id = p.patient_id
             JOIN doctors d ON m.doctor_id = d.doctor_id
             JOIN departments dept ON d.department_id = dept.department_id
-            ORDER BY m.record_date DESC
-        `);
+        `;
+        const params = [];
+
+        if (userRole === 'doctor' && doctorId) {
+            sql += ` WHERE m.doctor_id = ? `;
+            params.push(parseInt(doctorId, 10));
+        } else if (userRole === 'patient' && patientId) {
+            sql += ` WHERE m.patient_id = ? `;
+            params.push(parseInt(patientId, 10));
+        }
+
+        sql += ` ORDER BY m.record_date DESC `;
+        const rows = await query(sql, params);
         res.json({ success: true, data: rows });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-app.post('/api/medical-history', requireRole(['admin', 'doctor']), async (req, res) => {
+app.post('/api/medical-history', requireRole(['doctor']), async (req, res) => {
     try {
         const { patient_id, doctor_id, record_date, conditions, diagnosis, treatment, notes } = req.body;
         const info = await run(`
@@ -787,7 +807,7 @@ app.post('/api/medical-history', requireRole(['admin', 'doctor']), async (req, r
     }
 });
 
-app.delete('/api/medical-history/:id', requireRole(['admin']), async (req, res) => {
+app.delete('/api/medical-history/:id', requireRole(['doctor', 'admin']), async (req, res) => {
     try {
         await run('DELETE FROM medical_history WHERE history_id = ?', [req.params.id]);
         res.json({ success: true, message: 'Clinical case note removed successfully from MySQL' });
@@ -849,14 +869,35 @@ app.delete('/api/medications/:id', requireRole(['admin']), async (req, res) => {
 // =====================================================================
 app.get('/api/prescriptions', async (req, res) => {
     try {
-        const rows = await query('SELECT * FROM vw_ActivePrescriptions ORDER BY prescription_id DESC');
+        const userRole = (req.headers['x-user-role'] || req.query.role || '').toLowerCase();
+        // Administrator has NO ACCESS to confidential patient prescriptions
+        if (userRole === 'admin') {
+            return res.json({ success: true, data: [] });
+        }
+
+        const doctorId = req.headers['x-user-doctor-id'] || req.query.doctor_id;
+        const patientId = req.headers['x-user-patient-id'] || req.query.patient_id;
+
+        let sql = 'SELECT * FROM vw_ActivePrescriptions';
+        const params = [];
+
+        if (userRole === 'doctor' && doctorId) {
+            sql += ' WHERE doctor_id = ?';
+            params.push(parseInt(doctorId, 10));
+        } else if (userRole === 'patient' && patientId) {
+            sql += ' WHERE patient_id = ?';
+            params.push(parseInt(patientId, 10));
+        }
+
+        sql += ' ORDER BY prescription_id DESC';
+        const rows = await query(sql, params);
         res.json({ success: true, data: rows });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-app.post('/api/prescriptions', requireRole(['admin', 'doctor']), async (req, res) => {
+app.post('/api/prescriptions', requireRole(['doctor']), async (req, res) => {
     try {
         const { appointment_id, doctor_id, medication_id, dosage, frequency, duration, instructions, quantity = 1, prescribed_date } = req.body;
 
@@ -890,7 +931,7 @@ app.post('/api/prescriptions', requireRole(['admin', 'doctor']), async (req, res
     }
 });
 
-app.delete('/api/prescriptions/:id', requireRole(['admin', 'doctor']), async (req, res) => {
+app.delete('/api/prescriptions/:id', requireRole(['doctor']), async (req, res) => {
     try {
         const prescId = req.params.id;
         const presc = await get('SELECT * FROM prescriptions WHERE prescription_id = ?', [prescId]);
@@ -923,22 +964,33 @@ app.delete('/api/prescriptions/:id', requireRole(['admin', 'doctor']), async (re
 // =====================================================================
 app.get('/api/billing', async (req, res) => {
     try {
-        const rows = await query(`
+        const userRole = (req.headers['x-user-role'] || req.query.role || '').toLowerCase();
+        const patientId = req.headers['x-user-patient-id'] || req.query.patient_id;
+
+        let sql = `
             SELECT b.*, p.name AS patient_name, p.email AS patient_email, p.phone AS patient_phone,
                    d.name AS doctor_name, a.appointment_date, a.status AS appointment_status
             FROM billing b
             JOIN patients p ON b.patient_id = p.patient_id
             JOIN appointments a ON b.appointment_id = a.appointment_id
             JOIN doctors d ON a.doctor_id = d.doctor_id
-            ORDER BY b.bill_id DESC
-        `);
+        `;
+        const params = [];
+
+        if (userRole === 'patient' && patientId) {
+            sql += ` WHERE b.patient_id = ? `;
+            params.push(parseInt(patientId, 10));
+        }
+
+        sql += ` ORDER BY b.bill_id DESC `;
+        const rows = await query(sql, params);
         res.json({ success: true, data: rows });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-app.post('/api/billing/:id/pay', async (req, res) => {
+app.post('/api/billing/:id/pay', requireRole(['admin', 'doctor']), async (req, res) => {
     try {
         const { payment_mode } = req.body;
         if (!['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Insurance'].includes(payment_mode)) {
