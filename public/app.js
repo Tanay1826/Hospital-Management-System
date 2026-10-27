@@ -123,6 +123,9 @@ function openModal(id) {
     if (el) {
         el.classList.remove('hidden');
         populateSelectDropdowns();
+        if (id === 'modal-book-appointment') {
+            updateApptDoctorFee();
+        }
         if (id === 'modal-auth-login') {
             loadAuthUsers();
         }
@@ -704,6 +707,22 @@ function applyRolePermissions() {
         if (scopeBtnAll) scopeBtnAll.className = 'appt-scope-btn px-3 py-1.5 rounded-md font-bold text-xs bg-teal-700 text-white shadow-sm flex items-center gap-1.5 transition';
     }
 
+    // 10. Dashboard Stat Cards: Registered Patients and Collected Revenue visible ONLY to Admin & Doctor
+    const cardStatPatients = document.getElementById('card-stat-patients');
+    const cardStatRevenue = document.getElementById('card-stat-revenue');
+    const metricsStrip = document.getElementById('dashboard-metrics-strip');
+
+    if (role === 'admin' || role === 'doctor') {
+        if (cardStatPatients) cardStatPatients.classList.remove('hidden');
+        if (cardStatRevenue) cardStatRevenue.classList.remove('hidden');
+        if (metricsStrip) metricsStrip.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
+    } else {
+        // Patient role: Hide Registered Patients and Collected Revenue completely!
+        if (cardStatPatients) cardStatPatients.classList.add('hidden');
+        if (cardStatRevenue) cardStatRevenue.classList.add('hidden');
+        if (metricsStrip) metricsStrip.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+    }
+
     // Re-render UI grids & tables with active role permissions applied
     if (cachedDoctors && cachedDoctors.length > 0) renderDoctorsGrid();
     if (cachedAppointments && cachedAppointments.length > 0) renderAppointments(getFilteredAppointments());
@@ -982,17 +1001,26 @@ function updateDbBadge(engine) {
 
 async function loadDashboardData() {
     try {
-        const res = await fetch('/api/stats');
+        const res = await apiFetch('/api/stats');
         const json = await res.json();
+        const isStaffOrDoctor = currentUser && (currentUser.role === 'admin' || currentUser.role === 'doctor');
         if (json.success) {
             updateDbBadge(json.engine);
             const d = json.data;
-            document.getElementById('stat-patients').textContent = d.patientsCount;
-            document.getElementById('stat-doctors').textContent = d.doctorsCount;
-            document.getElementById('stat-appointments').textContent = d.appointmentsCount;
-            document.getElementById('stat-pending-appt').textContent = `${d.pendingAppointments} Scheduled`;
-            document.getElementById('stat-revenue').textContent = `₹${Number(d.totalRevenue).toLocaleString('en-IN')}`;
-            document.getElementById('stat-pending-bills').textContent = `₹${Number(d.pendingBilling).toLocaleString('en-IN')} Due`;
+            if (isStaffOrDoctor) {
+                const statPatientsEl = document.getElementById('stat-patients');
+                if (statPatientsEl) statPatientsEl.textContent = d.patientsCount;
+                const statRevenueEl = document.getElementById('stat-revenue');
+                if (statRevenueEl) statRevenueEl.textContent = `₹${Number(d.totalRevenue).toLocaleString('en-IN')}`;
+                const statPendingBillsEl = document.getElementById('stat-pending-bills');
+                if (statPendingBillsEl) statPendingBillsEl.textContent = `₹${Number(d.pendingBilling).toLocaleString('en-IN')} Due`;
+            }
+            const statDoctorsEl = document.getElementById('stat-doctors');
+            if (statDoctorsEl) statDoctorsEl.textContent = d.doctorsCount;
+            const statAppointmentsEl = document.getElementById('stat-appointments');
+            if (statAppointmentsEl) statAppointmentsEl.textContent = d.appointmentsCount;
+            const statPendingApptEl = document.getElementById('stat-pending-appt');
+            if (statPendingApptEl) statPendingApptEl.textContent = `${d.pendingAppointments} Scheduled`;
         }
 
         const apptRes = await fetch('/api/appointments');
@@ -1820,20 +1848,68 @@ function renderAppointments(appts) {
     lucide.createIcons();
 }
 
+function updateApptDoctorFee() {
+    const docSelect = document.getElementById('appt-doctor-select');
+    const feeInput = document.getElementById('appt-fee');
+    const feeBadge = document.getElementById('appt-fee-badge');
+    const feeNote = document.getElementById('appt-fee-note');
+    if (!docSelect || !feeInput) return;
+
+    const docId = Number(docSelect.value);
+    const doctor = (cachedDoctors || []).find(d => Number(d.doctor_id) === docId);
+    const isPatient = currentUser && currentUser.role === 'patient';
+
+    if (doctor) {
+        const exp = Number(doctor.experience_years) || 5;
+        // Standard formula: 15 yrs -> 1500, 8 yrs -> 800 (₹100 per year of clinical experience)
+        const fee = Math.max(500, exp * 100);
+        feeInput.value = fee;
+        if (feeBadge) feeBadge.textContent = `${exp} Yrs Exp: ₹${fee}`;
+        if (feeNote) {
+            feeNote.textContent = isPatient
+                ? `🔒 Standard fee (₹100 × ${exp} yrs experience = ₹${fee}) locked for patient booking`
+                : `Standard rate: ₹100 × ${exp} years clinical experience = ₹${fee}`;
+        }
+    } else {
+        feeInput.value = 800;
+        if (feeBadge) feeBadge.textContent = '₹100 / Yr Exp';
+        if (feeNote) feeNote.textContent = 'Select a specialist doctor to auto-calculate consultation fee';
+    }
+
+    if (isPatient) {
+        feeInput.readOnly = true;
+        feeInput.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-700', 'font-bold');
+    } else {
+        feeInput.readOnly = false;
+        feeInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
+    }
+}
+
 async function handleBookAppointment(e) {
     e.preventDefault();
-    const patient_id = (currentUser && currentUser.role === 'patient' && currentUser.patient_id) 
+    const isPatient = currentUser && currentUser.role === 'patient';
+    const patient_id = (isPatient && currentUser.patient_id) 
         ? currentUser.patient_id 
         : document.getElementById('appt-patient-select').value;
 
+    const docId = Number(document.getElementById('appt-doctor-select').value);
+    const doctor = (cachedDoctors || []).find(d => Number(d.doctor_id) === docId);
+    const exp = doctor ? (Number(doctor.experience_years) || 5) : 8;
+    const standardFee = Math.max(500, exp * 100);
+
+    // If patient is booking, fee is strictly locked to doctor's experience-based fee
+    const fee = isPatient
+        ? standardFee
+        : (parseFloat(document.getElementById('appt-fee').value) || standardFee);
+
     const data = {
         patient_id: patient_id,
-        doctor_id: document.getElementById('appt-doctor-select').value,
+        doctor_id: docId,
         appointment_date: document.getElementById('appt-date').value,
         start_time: document.getElementById('appt-start').value,
         end_time: document.getElementById('appt-end').value,
         consultation_type: document.getElementById('appt-type').value,
-        fee: parseFloat(document.getElementById('appt-fee').value) || 800
+        fee: fee
     };
 
     try {
@@ -2473,7 +2549,7 @@ function populateSelectDropdowns() {
         }
     });
 
-    const docOptions = cachedDoctors.map(d => `<option value="${d.doctor_id}">${d.name} — ${d.department_name}</option>`).join('');
+    const docOptions = cachedDoctors.map(d => `<option value="${d.doctor_id}">${d.name} — ${d.department_name} (${d.experience_years} yrs exp)</option>`).join('');
     ['appt-doctor-select', 'history-doctor-select', 'presc-doctor-select'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = `<option value="">Select doctor...</option>` + docOptions;
@@ -2513,4 +2589,6 @@ function populateSelectDropdowns() {
             if (el) el.value = currentUser.patient_id;
         });
     }
+
+    updateApptDoctorFee();
 }

@@ -733,8 +733,9 @@
                         </div>
 
                         <!-- Key Metrics Strip -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-[#148F77]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-strip">
+                            <!-- 1. Registered Patients (Admin & Doctor ONLY) -->
+                            <div id="card-stat-patients" class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-[#148F77]">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Registered Patients</span>
                                     <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
@@ -745,7 +746,8 @@
                                 </div>
                             </div>
 
-                            <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-amber-500">
+                            <!-- 2. Active Appointments (All Roles) -->
+                            <div id="card-stat-appointments" class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-amber-500">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Appointments</span>
                                     <i data-lucide="calendar-clock" class="w-4 h-4 text-slate-400"></i>
@@ -756,7 +758,8 @@
                                 </div>
                             </div>
 
-                            <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-blue-600">
+                            <!-- 3. Consulting Doctors (All Roles) -->
+                            <div id="card-stat-doctors" class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-blue-600">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Consulting Doctors</span>
                                     <i data-lucide="stethoscope" class="w-4 h-4 text-slate-400"></i>
@@ -767,7 +770,8 @@
                                 </div>
                             </div>
 
-                            <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-emerald-600">
+                            <!-- 4. Collected Revenue (Admin & Doctor ONLY) -->
+                            <div id="card-stat-revenue" class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-l-4 border-l-emerald-600">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Collected Revenue</span>
                                     <i data-lucide="indian-rupee" class="w-4 h-4 text-slate-400"></i>
@@ -1389,7 +1393,7 @@
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 mb-1">Consulting Specialist</label>
-                    <select id="appt-doctor-select" required class="form-input bg-white"></select>
+                    <select id="appt-doctor-select" required onchange="updateApptDoctorFee()" class="form-input bg-white"></select>
                 </div>
                 <div class="grid grid-cols-3 gap-2.5">
                     <div>
@@ -1416,8 +1420,12 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Consultation Fee (₹)</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-semibold text-slate-700">Consultation Fee (₹)</label>
+                            <span id="appt-fee-badge" class="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">₹100 / Yr Exp</span>
+                        </div>
                         <input type="number" id="appt-fee" required value="800" min="0" step="50" class="form-input">
+                        <p id="appt-fee-note" class="text-[11px] text-slate-500 mt-1">Standard rate: ₹100 per year of clinical experience</p>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">

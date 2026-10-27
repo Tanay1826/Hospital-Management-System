@@ -284,25 +284,28 @@ app.delete('/api/auth/users/:id', async (req, res) => {
 // =====================================================================
 app.get('/api/stats', async (req, res) => {
     try {
-        const patientsRow = await get('SELECT COUNT(*) as count FROM patients');
+        const userRole = (req.headers['x-user-role'] || '').toLowerCase();
+        const isStaffOrDoctor = (userRole === 'admin' || userRole === 'doctor');
+
+        const patientsRow = isStaffOrDoctor ? await get('SELECT COUNT(*) as count FROM patients') : { count: 0 };
         const doctorsRow = await get('SELECT COUNT(*) as count FROM doctors');
         const appointmentsRow = await get('SELECT COUNT(*) as count FROM appointments');
         const pendingAppointmentsRow = await get("SELECT COUNT(*) as count FROM appointments WHERE status = 'Scheduled'");
-        const totalRevenueRow = await get("SELECT IFNULL(SUM(total_amount), 0) as total FROM billing WHERE payment_status = 'Paid'");
-        const pendingBillingRow = await get("SELECT IFNULL(SUM(total_amount), 0) as total FROM billing WHERE payment_status = 'Pending'");
-        const lowStockRow = await get('SELECT COUNT(*) as count FROM medications WHERE stock_quantity < 100');
+        const totalRevenueRow = isStaffOrDoctor ? await get("SELECT IFNULL(SUM(total_amount), 0) as total FROM billing WHERE payment_status = 'Paid'") : { total: 0 };
+        const pendingBillingRow = isStaffOrDoctor ? await get("SELECT IFNULL(SUM(total_amount), 0) as total FROM billing WHERE payment_status = 'Pending'") : { total: 0 };
+        const lowStockRow = isStaffOrDoctor ? await get('SELECT COUNT(*) as count FROM medications WHERE stock_quantity < 100') : { count: 0 };
 
         res.json({
             success: true,
             engine: getEngine(),
             data: {
-                patientsCount: Number(patientsRow?.count || 0),
+                patientsCount: isStaffOrDoctor ? Number(patientsRow?.count || 0) : null,
                 doctorsCount: Number(doctorsRow?.count || 0),
                 appointmentsCount: Number(appointmentsRow?.count || 0),
                 pendingAppointments: Number(pendingAppointmentsRow?.count || 0),
-                totalRevenue: Number(totalRevenueRow?.total || 0),
-                pendingBilling: Number(pendingBillingRow?.total || 0),
-                lowStockMedications: Number(lowStockRow?.count || 0)
+                totalRevenue: isStaffOrDoctor ? Number(totalRevenueRow?.total || 0) : null,
+                pendingBilling: isStaffOrDoctor ? Number(pendingBillingRow?.total || 0) : null,
+                lowStockMedications: isStaffOrDoctor ? Number(lowStockRow?.count || 0) : 0
             }
         });
     } catch (err) {
@@ -667,7 +670,7 @@ app.get('/api/appointments', async (req, res) => {
 
 app.post('/api/appointments', async (req, res) => {
     try {
-        const { patient_id, doctor_id, appointment_date, start_time, end_time, consultation_type, fee = 600 } = req.body;
+        const { patient_id, doctor_id, appointment_date, start_time, end_time, consultation_type, fee } = req.body;
 
         if (!patient_id || !doctor_id || !appointment_date || !start_time || !end_time || !consultation_type) {
             return res.status(400).json({ success: false, error: 'All appointment fields are required' });
@@ -675,7 +678,15 @@ app.post('/api/appointments', async (req, res) => {
 
         const pId = parseInt(patient_id, 10);
         const dId = parseInt(doctor_id, 10);
-        const f = parseFloat(fee) || 600;
+
+        // Calculate standard doctor experience fee: (experience_years * 100)
+        const docRecord = await get('SELECT experience_years FROM doctors WHERE doctor_id = ?', [dId]);
+        const exp = docRecord ? (parseInt(docRecord.experience_years, 10) || 5) : 5;
+        const standardExpFee = Math.max(500, exp * 100);
+
+        // If booked by patient, fee cannot be modified by patient - strictly enforce standardExpFee
+        const userRole = (req.headers['x-user-role'] || '').toLowerCase();
+        const f = (userRole === 'patient') ? standardExpFee : (parseFloat(fee) || standardExpFee);
 
         // Check for doctor slot conflict
         const conflict = await get(`
