@@ -23,19 +23,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Auto-sync database state to database/hospital_management_system.sql on every modification
 const { syncDatabaseToSqlFile } = require('./database/syncSql');
 
-// Auto-sync middleware for mutating REST endpoints (POST, PUT, PATCH, DELETE)
+// Helper: Normalize contact phone to 10 digits (strips country code +91 or 91 or leading 0)
+function extractClean10DigitPhone(phone) {
+    let clean = String(phone || '').replace(/\D/g, '');
+    if (clean.length === 12 && clean.startsWith('91')) {
+        clean = clean.slice(2);
+    } else if (clean.length === 11 && clean.startsWith('0')) {
+        clean = clean.slice(1);
+    }
+    return clean;
+}
+
+// Universal Auto-Sync Middleware: Synchronously update hospital_management_system.sql
+// on EVERY mutating API call (POST, PUT, PATCH, DELETE) BEFORE sending response to client!
 app.use((req, res, next) => {
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     const url = req.originalUrl || req.url || '';
     if (mutatingMethods.includes(req.method) && url.startsWith('/api/') && !url.startsWith('/api/auth/login') && !url.startsWith('/api/sync-sql-file')) {
-        res.on('finish', () => {
+        const originalJson = res.json.bind(res);
+        res.json = async function(body) {
             if (res.statusCode >= 200 && res.statusCode < 300) {
-                // Real-time synchronization to database/hospital_management_system.sql
-                syncDatabaseToSqlFile().catch(err => {
-                    console.error('[SQL Auto-Sync Error]:', err.message);
-                });
+                try {
+                    await syncDatabaseToSqlFile();
+                } catch (syncErr) {
+                    console.error('[SQL Auto-Sync Error in res.json]:', syncErr.message);
+                }
             }
-        });
+            return originalJson(body);
+        };
     }
     next();
 });
@@ -163,9 +178,9 @@ app.post('/api/auth/register-doctor', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Name, email, phone, specialization, and department are required' });
         }
 
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
 
         const exp = parseInt(experience_years, 10) || 0;
@@ -212,6 +227,8 @@ app.post('/api/auth/register-doctor', async (req, res) => {
             return { doctorId, user: newUser };
         });
 
+        await syncDatabaseToSqlFile();
+
         res.status(201).json({
             success: true,
             message: `Doctor ${name} registered successfully with OPD schedule!`,
@@ -231,9 +248,9 @@ app.post('/api/auth/register-patient', async (req, res) => {
             return res.status(400).json({ success: false, error: 'All personal and demographic fields are required' });
         }
 
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
 
         const userPass = password || 'patient123';
@@ -259,6 +276,8 @@ app.post('/api/auth/register-patient', async (req, res) => {
 
             return { patientId, user: newUser };
         });
+
+        await syncDatabaseToSqlFile();
 
         res.status(201).json({
             success: true,
@@ -291,6 +310,8 @@ app.post('/api/auth/register-admin', async (req, res) => {
             FROM users u
             WHERE u.user_id = ?
         `, [userInfo.lastInsertRowid]);
+
+        await syncDatabaseToSqlFile();
 
         res.status(201).json({
             success: true,
@@ -409,9 +430,9 @@ app.post('/api/patients', async (req, res) => {
             return res.status(400).json({ success: false, error: 'All fields are required' });
         }
 
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
 
         const info = await run(`
@@ -431,7 +452,9 @@ app.post('/api/patients', async (req, res) => {
             newUser = await get('SELECT * FROM users WHERE patient_id = ?', [patientId]);
         } catch (_) {}
 
-        res.status(201).json({ success: true, id: patientId, user: newUser, message: 'Patient registered successfully' });
+        await syncDatabaseToSqlFile();
+
+        res.status(201).json({ success: true, id: patientId, user: newUser, message: 'Patient registered successfully in MySQL & synced to SQL file' });
     } catch (err) {
         res.status(400).json({ success: false, error: err.message });
     }
@@ -440,9 +463,9 @@ app.post('/api/patients', async (req, res) => {
 app.put('/api/patients/:id', async (req, res) => {
     try {
         const { name, email, date_of_birth, gender, phone, address } = req.body;
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
 
         await run(`
@@ -455,6 +478,8 @@ app.put('/api/patients/:id', async (req, res) => {
         try {
             await run('UPDATE users SET full_name = ?, email = ? WHERE patient_id = ?', [name, email, req.params.id]);
         } catch (_) {}
+
+        await syncDatabaseToSqlFile();
 
         res.json({ success: true, message: 'Patient updated successfully' });
     } catch (err) {
@@ -477,6 +502,7 @@ app.delete('/api/patients/:id', requireRole(['admin']), async (req, res) => {
             await run('DELETE FROM users WHERE patient_id = ?', [patientId]);
             await run('DELETE FROM patients WHERE patient_id = ?', [patientId]);
         });
+        await syncDatabaseToSqlFile();
         res.json({ success: true, message: 'Patient and all linked appointments, invoices, and medical records removed from MySQL' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -557,9 +583,9 @@ app.post('/api/doctors', requireRole(['admin']), async (req, res) => {
         if (!name || !email || !phone || !specialization || !department_id) {
             return res.status(400).json({ success: false, error: 'Name, email, phone, department, and specialization are required' });
         }
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
         const exp = parseInt(experience_years, 10) || 0;
         const deptId = parseInt(department_id, 10);
@@ -596,7 +622,9 @@ app.post('/api/doctors', requireRole(['admin']), async (req, res) => {
             return { doctorId };
         });
 
-        res.status(201).json({ success: true, id: result.doctorId, message: 'Doctor and weekly schedule registered successfully' });
+        await syncDatabaseToSqlFile();
+
+        res.status(201).json({ success: true, id: result.doctorId, message: 'Doctor and weekly schedule registered successfully in MySQL & synced to SQL file' });
     } catch (err) {
         res.status(400).json({ success: false, error: err.message });
     }
@@ -608,9 +636,9 @@ app.put('/api/doctors/:id', requireRole(['admin']), async (req, res) => {
         if (!name || !email || !phone || !specialization || !department_id) {
             return res.status(400).json({ success: false, error: 'All fields are required to update doctor' });
         }
-        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        const cleanPhone = extractClean10DigitPhone(phone);
         if (cleanPhone.length !== 10) {
-            return res.status(400).json({ success: false, error: 'Contact phone must be exactly 10 digits' });
+            return res.status(400).json({ success: false, error: 'Contact phone must be a valid 10-digit mobile number' });
         }
         const exp = parseInt(experience_years, 10) || 0;
         const deptId = parseInt(department_id, 10);
@@ -625,6 +653,8 @@ app.put('/api/doctors/:id', requireRole(['admin']), async (req, res) => {
         try {
             await run('UPDATE users SET full_name = ?, email = ? WHERE doctor_id = ?', [name, email, req.params.id]);
         } catch (_) {}
+
+        await syncDatabaseToSqlFile();
 
         res.json({ success: true, message: 'Doctor updated successfully in MySQL!' });
     } catch (err) {
@@ -648,6 +678,7 @@ app.delete('/api/doctors/:id', requireRole(['admin']), async (req, res) => {
             await run('DELETE FROM users WHERE doctor_id = ?', [doctorId]);
             await run('DELETE FROM doctors WHERE doctor_id = ?', [doctorId]);
         });
+        await syncDatabaseToSqlFile();
         res.json({ success: true, message: 'Doctor and all linked schedules, appointments, and records removed from MySQL' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -749,11 +780,13 @@ app.post('/api/appointments', async (req, res) => {
             return { apptId, billId: billResult.lastInsertRowid };
         });
 
+        await syncDatabaseToSqlFile();
+
         res.status(201).json({
             success: true,
             appointment_id: result.apptId,
             bill_id: result.billId,
-            message: 'Appointment booked & invoice created successfully (Atomic Transaction Committed)'
+            message: 'Appointment booked & invoice created successfully in MySQL & synced to SQL file'
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -768,6 +801,7 @@ app.patch('/api/appointments/:id/status', async (req, res) => {
         }
 
         await run('UPDATE appointments SET status = ? WHERE appointment_id = ?', [status, req.params.id]);
+        await syncDatabaseToSqlFile();
         res.json({ success: true, message: `Appointment marked as ${status}` });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -782,6 +816,7 @@ app.delete('/api/appointments/:id', requireRole(['admin']), async (req, res) => 
             await run('DELETE FROM billing WHERE appointment_id = ?', [appointmentId]);
             await run('DELETE FROM appointments WHERE appointment_id = ?', [appointmentId]);
         });
+        await syncDatabaseToSqlFile();
         res.json({ success: true, message: 'Appointment and linked invoice/prescriptions deleted successfully from MySQL' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

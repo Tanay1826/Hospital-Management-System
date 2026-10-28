@@ -188,7 +188,7 @@ CREATE TABLE users (
 );
 
 -- =====================================================================
--- SECTION 2: DML - CURRENT DATABASE DATA (Live Synchronized on 10/28/2026, 11:38:46 AM)
+-- SECTION 2: DML - CURRENT DATABASE DATA (Live Synchronized on 10/28/2026, 12:08:45 PM)
 -- =====================================================================
 
 -- 1. Departments Data
@@ -240,14 +240,14 @@ INSERT INTO patients (patient_id, name, email, date_of_birth, gender, phone, add
 
 -- 5. Appointments Data
 INSERT INTO appointments (appointment_id, patient_id, doctor_id, appointment_date, start_time, end_time, status, consultation_type) VALUES
-(1, 1, 1, '2026-10-15', '09:30:00', '10:00:00', 'Completed', 'In-Person'),
-(2, 2, 2, '2026-10-16', '10:30:00', '11:00:00', 'Completed', 'In-Person'),
+(1, 1, 1, '2026-10-15', '09:30:00', '10:00:00', 'Scheduled', 'In-Person'),
+(2, 2, 2, '2026-10-16', '10:30:00', '11:00:00', 'Scheduled', 'In-Person'),
 (3, 3, 3, '2026-10-14', '09:00:00', '09:30:00', 'Scheduled', 'In-Person'),
 (4, 4, 4, '2026-10-10', '11:00:00', '11:30:00', 'Completed', 'In-Person'),
 (5, 5, 5, '2026-10-11', '10:00:00', '10:30:00', 'Completed', 'Follow-up'),
 (6, 6, 6, '2026-10-12', '14:00:00', '14:30:00', 'Completed', 'In-Person'),
 (7, 1, 5, '2026-10-08', '08:30:00', '09:00:00', 'Completed', 'Emergency'),
-(8, 2, 1, '2026-10-19', '11:00:00', '11:30:00', 'Cancelled', 'Online/Telehealth'),
+(8, 2, 1, '2026-10-19', '11:00:00', '11:30:00', 'Scheduled', 'Online/Telehealth'),
 (9, 5, 1, '2026-10-13', '12:27:00', '13:28:00', 'Scheduled', 'In-Person'),
 (10, 6, 1, '2026-10-13', '18:00:00', '10:30:00', 'Scheduled', 'In-Person'),
 (11, 7, 6, '2026-10-13', '15:00:00', '10:30:00', 'Scheduled', 'In-Person'),
@@ -301,19 +301,19 @@ INSERT INTO billing (bill_id, patient_id, appointment_id, bill_date, total_amoun
 -- 10. Users Data (Login Credentials & Role Assignment)
 INSERT INTO users (user_id, username, password, role, doctor_id, patient_id, full_name, email) VALUES
 (1, 'admin', 'admin123', 'admin', NULL, NULL, 'Anurag (Admin)', 'admin@medicare.com'),
-(2, 'dr.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
-(3, 'dr.priya', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
-(4, 'dr.banerjee', 'doctor123', 'doctor', 3, NULL, 'Dr. Amitav Banerjee', 'amitav.banerjee@medicare.com'),
-(5, 'dr.kulkarni', 'doctor123', 'doctor', 4, NULL, 'Dr. Sunita Kulkarni', 'sunita.kulkarni@medicare.com'),
-(6, 'dr.malhotra', 'doctor123', 'doctor', 5, NULL, 'Dr. Vikram Malhotra', 'vikram.malhotra@medicare.com'),
-(7, 'dr.nair', 'doctor123', 'doctor', 6, NULL, 'Dr. Ananya Nair', 'ananya.nair@medicare.com'),
+(2, 'rajesh.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
+(3, 'priya.deshmukh', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
+(4, 'amitav.banerjee', 'doctor123', 'doctor', 3, NULL, 'Dr. Amitav Banerjee', 'amitav.banerjee@medicare.com'),
+(5, 'sunita.kulkarni', 'doctor123', 'doctor', 4, NULL, 'Dr. Sunita Kulkarni', 'sunita.kulkarni@medicare.com'),
+(6, 'vikram.malhotra', 'doctor123', 'doctor', 5, NULL, 'Dr. Vikram Malhotra', 'vikram.malhotra@medicare.com'),
+(7, 'ananya.nair', 'doctor123', 'doctor', 6, NULL, 'Dr. Ananya Nair', 'ananya.nair@medicare.com'),
 (8, 'rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
 (9, 'sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com'),
 (10, 'kabir.mehta', 'patient123', 'patient', NULL, 3, 'Kabir Mehta', 'kabir.mehta@example.com'),
 (11, 'meera.joshi', 'patient123', 'patient', NULL, 4, 'Meera Joshi', 'meera.joshi@example.com'),
 (12, 'arjun.reddy', 'patient123', 'patient', NULL, 5, 'Arjun Reddy', 'arjun.reddy@example.com'),
 (13, 'pooja.iyer', 'patient123', 'patient', NULL, 6, 'Pooja Iyer', 'pooja.iyer@example.com'),
-(14, 'harsh.aatha', 'patient123', 'patient', NULL, 7, 'Harsh Aatha', 'harshaat@gmail.com');
+(14, 'harshaat', 'patient123', 'patient', NULL, 7, 'Harsh Aatha', 'harshaat@gmail.com');
 
 -- =====================================================================
 -- SECTION 3: DATABASE VIEWS (UNIT 9)

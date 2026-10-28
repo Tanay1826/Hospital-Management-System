@@ -98,6 +98,14 @@ function formatCurrency(amount) {
     return isNaN(num) ? '0.00' : num.toFixed(2);
 }
 
+// Normalize phone to clean 10-digit format (strips +91, 91, or leading 0)
+function clean10DigitPhone(raw) {
+    let clean = String(raw || '').replace(/\D/g, '');
+    if (clean.length === 12 && clean.startsWith('91')) clean = clean.slice(2);
+    else if (clean.length === 11 && clean.startsWith('0')) clean = clean.slice(1);
+    return clean;
+}
+
 // Toast Notification
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
@@ -431,9 +439,9 @@ async function handleDoctorRegistration(e) {
     }
 
     const rawPhone = document.getElementById('reg-doc-phone').value.trim();
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = clean10DigitPhone(rawPhone);
     if (cleanPhone.length !== 10) {
-        return showToast('Contact phone must be exactly 10 digits.', 'error');
+        return showToast('Contact phone must be a valid 10-digit mobile number.', 'error');
     }
 
     const payload = {
@@ -460,7 +468,7 @@ async function handleDoctorRegistration(e) {
         });
         const json = await res.json();
         if (json.success) {
-            showToast(`Doctor ${payload.name} registered successfully with OPD schedule in MySQL!`);
+            showToast(`Doctor ${payload.name} registered in MySQL & synced to SQL file!`);
             currentUser = json.data || json.user;
             sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
             localStorage.setItem('medicare_user', JSON.stringify(currentUser));
@@ -480,9 +488,9 @@ async function handleDoctorRegistration(e) {
 async function handlePatientRegistration(e) {
     e.preventDefault();
     const rawPhone = document.getElementById('reg-pat-phone').value.trim();
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = clean10DigitPhone(rawPhone);
     if (cleanPhone.length !== 10) {
-        return showToast('Contact phone must be exactly 10 digits.', 'error');
+        return showToast('Contact phone must be a valid 10-digit mobile number.', 'error');
     }
 
     const payload = {
@@ -504,7 +512,7 @@ async function handlePatientRegistration(e) {
         });
         const json = await res.json();
         if (json.success) {
-            showToast(`Patient account created in MySQL with official UHID!`);
+            showToast(`Patient account created in MySQL & synced to SQL file!`);
             currentUser = json.data || json.user;
             sessionStorage.setItem('medicare_active_user', JSON.stringify(currentUser));
             localStorage.setItem('medicare_user', JSON.stringify(currentUser));
@@ -1295,9 +1303,9 @@ function filterPatients() {
 async function handleCreatePatient(e) {
     e.preventDefault();
     const rawPhone = document.getElementById('new-patient-phone').value.trim();
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = clean10DigitPhone(rawPhone);
     if (cleanPhone.length !== 10) {
-        return showToast('Contact phone must be exactly 10 digits.', 'error');
+        return showToast('Contact phone must be a valid 10-digit mobile number.', 'error');
     }
 
     const data = {
@@ -1316,7 +1324,7 @@ async function handleCreatePatient(e) {
         });
         const json = await res.json();
         if (json.success) {
-            showToast('Patient registered successfully');
+            showToast('Patient registered in MySQL & synced to SQL file');
             closeModal('modal-add-patient');
             e.target.reset();
             loadPatients();
@@ -1628,9 +1636,9 @@ async function handleCreateDoctor(e) {
         return showToast('Permission Denied: Only Admin can add doctors to hospital roster.', 'error');
     }
     const rawPhone = document.getElementById('new-doc-phone').value.trim();
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = clean10DigitPhone(rawPhone);
     if (cleanPhone.length !== 10) {
-        return showToast('Phone number must be exactly 10 digits.', 'error');
+        return showToast('Phone number must be a valid 10-digit mobile number.', 'error');
     }
     const data = {
         name: document.getElementById('new-doc-name').value.trim(),
@@ -1648,7 +1656,7 @@ async function handleCreateDoctor(e) {
         });
         const json = await res.json();
         if (json.success) {
-            showToast('Specialist added to hospital roster');
+            showToast('Specialist added to MySQL & synced to SQL file');
             closeModal('modal-add-doctor');
             e.target.reset();
             loadDoctors();
@@ -1695,9 +1703,9 @@ async function handleUpdateDoctor(e) {
     }
     const id = document.getElementById('edit-doc-id').value;
     const rawPhone = document.getElementById('edit-doc-phone').value.trim();
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = clean10DigitPhone(rawPhone);
     if (cleanPhone.length !== 10) {
-        return showToast('Phone number must be exactly 10 digits.', 'error');
+        return showToast('Phone number must be a valid 10-digit mobile number.', 'error');
     }
     const data = {
         name: document.getElementById('edit-doc-name').value.trim(),

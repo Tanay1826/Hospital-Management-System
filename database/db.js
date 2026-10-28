@@ -383,9 +383,13 @@ function initializeSQLite() {
         if (userCount.count === 0) {
             sqliteDb.exec(`
                 INSERT INTO users (username, password, role, doctor_id, patient_id, full_name, email) VALUES
-                ('admin', 'admin123', 'admin', NULL, NULL, 'Dr. Tanay Bhutada (Admin)', 'admin@medicare.com'),
+                ('admin', 'admin123', 'admin', NULL, NULL, 'Anurag (Admin)', 'admin@medicare.com'),
                 ('dr.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
                 ('dr.priya', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
+                ('dr.banerjee', 'doctor123', 'doctor', 3, NULL, 'Dr. Amitav Banerjee', 'amitav.banerjee@medicare.com'),
+                ('dr.kulkarni', 'doctor123', 'doctor', 4, NULL, 'Dr. Sunita Kulkarni', 'sunita.kulkarni@medicare.com'),
+                ('dr.malhotra', 'doctor123', 'doctor', 5, NULL, 'Dr. Vikram Malhotra', 'vikram.malhotra@medicare.com'),
+                ('dr.nair', 'doctor123', 'doctor', 6, NULL, 'Dr. Ananya Nair', 'ananya.nair@medicare.com'),
                 ('rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
                 ('sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com');
             `);
@@ -891,11 +895,19 @@ async function ensureMySQLUsersTable(pool) {
         if (rows[0].count === 0) {
             await pool.query(`
                 INSERT INTO users (username, password, role, doctor_id, patient_id, full_name, email) VALUES
-                ('admin', 'admin123', 'admin', NULL, NULL, 'Dr. Tanay Bhutada (Admin)', 'admin@medicare.com'),
+                ('admin', 'admin123', 'admin', NULL, NULL, 'Anurag (Admin)', 'admin@medicare.com'),
                 ('dr.sharma', 'doctor123', 'doctor', 1, NULL, 'Dr. Rajesh Sharma', 'rajesh.sharma@medicare.com'),
                 ('dr.priya', 'doctor123', 'doctor', 2, NULL, 'Dr. Priya Deshmukh', 'priya.deshmukh@medicare.com'),
+                ('dr.banerjee', 'doctor123', 'doctor', 3, NULL, 'Dr. Amitav Banerjee', 'amitav.banerjee@medicare.com'),
+                ('dr.kulkarni', 'doctor123', 'doctor', 4, NULL, 'Dr. Sunita Kulkarni', 'sunita.kulkarni@medicare.com'),
+                ('dr.malhotra', 'doctor123', 'doctor', 5, NULL, 'Dr. Vikram Malhotra', 'vikram.malhotra@medicare.com'),
+                ('dr.nair', 'doctor123', 'doctor', 6, NULL, 'Dr. Ananya Nair', 'ananya.nair@medicare.com'),
                 ('rohan.verma', 'patient123', 'patient', NULL, 1, 'Rohan Verma', 'rohan.verma@example.com'),
-                ('sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com')
+                ('sneha.patil', 'patient123', 'patient', NULL, 2, 'Sneha Patil', 'sneha.patil@example.com'),
+                ('kabir.mehta', 'patient123', 'patient', NULL, 3, 'Kabir Mehta', 'kabir.mehta@example.com'),
+                ('meera.joshi', 'patient123', 'patient', NULL, 4, 'Meera Joshi', 'meera.joshi@example.com'),
+                ('arjun.reddy', 'patient123', 'patient', NULL, 5, 'Arjun Reddy', 'arjun.reddy@example.com'),
+                ('pooja.iyer', 'patient123', 'patient', NULL, 6, 'Pooja Iyer', 'pooja.iyer@example.com');
             `);
             console.log('👥 Initialized Auth users in MySQL (Admin, Doctors, Patients)');
         }

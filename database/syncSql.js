@@ -14,6 +14,13 @@ function formatSqlValue(val, col) {
     }
     if (typeof val === 'boolean') return val ? 1 : 0;
 
+    if (val instanceof Date) {
+        const yyyy = val.getFullYear();
+        const mm = String(val.getMonth() + 1).padStart(2, '0');
+        const dd = String(val.getDate()).padStart(2, '0');
+        return `'${yyyy}-${mm}-${dd}'`;
+    }
+
     let str = String(val);
     if ((col === 'start_time' || col === 'end_time' || col === 'break_start' || col === 'break_end') && /^\d{2}:\d{2}$/.test(str)) {
         str = str + ':00';
@@ -35,7 +42,15 @@ function buildInsertStatement(tableName, columns, rows) {
     return `INSERT INTO ${tableName} (${colList}) VALUES\n${valuesList};\n`;
 }
 
-async function syncDatabaseToSqlFile() {
+// Sequential queue to strictly prevent Windows EBUSY file collisions on concurrent writes
+let syncQueue = Promise.resolve();
+
+function syncDatabaseToSqlFile() {
+    syncQueue = syncQueue.catch(() => {}).then(() => _performSync());
+    return syncQueue;
+}
+
+async function _performSync() {
     try {
         if (!fs.existsSync(SQL_FILE_PATH)) {
             console.warn(`[SQL SYNC] Warning: ${SQL_FILE_PATH} not found.`);
