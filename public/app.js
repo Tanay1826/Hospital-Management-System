@@ -1050,6 +1050,34 @@ function updateDbBadge(engine) {
     }
 }
 
+async function manualSyncSqlFile() {
+    const btn = document.getElementById('btn-sync-sql-header');
+    try {
+        if (btn) {
+            btn.classList.add('opacity-60', 'pointer-events-none');
+            btn.innerHTML = '<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Syncing...</span>';
+            lucide.createIcons();
+        }
+        showToast('Syncing all live database records into database/hospital_management_system.sql...', 'info');
+
+        const res = await apiFetch('/api/sync-sql-file', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) {
+            showToast('✅ database/hospital_management_system.sql successfully updated with all latest records!');
+        } else {
+            showToast(json.error || 'Failed to sync SQL file', 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.classList.remove('opacity-60', 'pointer-events-none');
+            btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5 text-emerald-600"></i><span>Sync .SQL File</span>';
+            lucide.createIcons();
+        }
+    }
+}
+
 async function loadDashboardData() {
     try {
         const res = await apiFetch('/api/stats');

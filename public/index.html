@@ -594,6 +594,12 @@
                         <span id="db-badge-text">Checking Database...</span>
                     </div>
 
+                    <!-- Sync MySQL File (.sql) Action Button -->
+                    <button onclick="manualSyncSqlFile()" id="btn-sync-sql-header" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition shadow-sm" title="Synchronize current live database records into database/hospital_management_system.sql">
+                        <i data-lucide="save" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Sync .SQL File</span>
+                    </button>
+
                     <!-- Active User / Role Switcher Pill -->
                     <button onclick="openModal('modal-auth-login')" id="btn-user-profile" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 transition" title="Click to switch role or login">
                         <span id="header-user-avatar" class="w-6 h-6 rounded-full bg-[#148F77] text-white flex items-center justify-center font-bold text-[10px]">AD</span>

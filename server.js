@@ -20,6 +20,39 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Auto-sync database state to database/hospital_management_system.sql on every modification
+const { syncDatabaseToSqlFile } = require('./database/syncSql');
+
+// Auto-sync middleware for mutating REST endpoints (POST, PUT, PATCH, DELETE)
+app.use((req, res, next) => {
+    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    const url = req.originalUrl || req.url || '';
+    if (mutatingMethods.includes(req.method) && url.startsWith('/api/') && !url.startsWith('/api/auth/login') && !url.startsWith('/api/sync-sql-file')) {
+        res.on('finish', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+                // Real-time synchronization to database/hospital_management_system.sql
+                syncDatabaseToSqlFile().catch(err => {
+                    console.error('[SQL Auto-Sync Error]:', err.message);
+                });
+            }
+        });
+    }
+    next();
+});
+
+// Dedicated SQL File Synchronization API
+app.all('/api/sync-sql-file', async (req, res) => {
+    try {
+        const ok = await syncDatabaseToSqlFile();
+        res.json({
+            success: ok,
+            message: 'Live database records successfully synchronized into database/hospital_management_system.sql!'
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // Database Connection Status API
 app.get('/api/db-status', (req, res) => {
     const engine = getEngine();
@@ -1251,4 +1284,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.log(`🗄️ Active Database Engine: [${getEngine().toUpperCase()}]`);
     console.log(`👥 Team: Tanay Bhutada | Hiten Bohra | Aayush Chaudhari`);
     console.log(`=======================================================`);
+    
+    // Automatically keep database/hospital_management_system.sql in sync with current DB
+    syncDatabaseToSqlFile().catch(() => {});
 });

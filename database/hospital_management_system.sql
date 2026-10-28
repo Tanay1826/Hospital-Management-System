@@ -188,7 +188,7 @@ CREATE TABLE users (
 );
 
 -- =====================================================================
--- SECTION 2: DML - SAMPLE DATA INSERTS
+-- SECTION 2: DML - CURRENT DATABASE DATA (Live Synchronized on 10/28/2026, 11:38:46 AM)
 -- =====================================================================
 
 -- 1. Departments Data
@@ -235,18 +235,24 @@ INSERT INTO patients (patient_id, name, email, date_of_birth, gender, phone, add
 (3, 'Kabir Mehta', 'kabir.mehta@example.com', '2016-08-05', 'Male', '+91 97003 00333', 'Plot 88, Vasant Vihar, New Delhi'),
 (4, 'Meera Joshi', 'meera.joshi@example.com', '1972-02-19', 'Female', '+91 97004 00444', '204, Green Meadows, Jayanagar, Bengaluru'),
 (5, 'Arjun Reddy', 'arjun.reddy@example.com', '1991-09-30', 'Male', '+91 97005 00555', 'H.No 3-5-102, Banjara Hills, Hyderabad'),
-(6, 'Pooja Iyer', 'pooja.iyer@example.com', '2001-06-12', 'Female', '+91 97006 00666', 'Flat 101, Palm Court, Anna Nagar, Chennai');
+(6, 'Pooja Iyer', 'pooja.iyer@example.com', '2001-06-12', 'Female', '+91 97006 00666', 'Flat 101, Palm Court, Anna Nagar, Chennai'),
+(7, 'Harsh Aatha', 'harshaat@gmail.com', '2003-02-05', 'Male', '9999555666', 'Nagpur 440032');
 
 -- 5. Appointments Data
 INSERT INTO appointments (appointment_id, patient_id, doctor_id, appointment_date, start_time, end_time, status, consultation_type) VALUES
-(1, 1, 1, '2026-10-15', '09:30:00', '10:00:00', 'Scheduled', 'In-Person'),
-(2, 2, 2, '2026-10-16', '10:30:00', '11:00:00', 'Scheduled', 'In-Person'),
+(1, 1, 1, '2026-10-15', '09:30:00', '10:00:00', 'Completed', 'In-Person'),
+(2, 2, 2, '2026-10-16', '10:30:00', '11:00:00', 'Completed', 'In-Person'),
 (3, 3, 3, '2026-10-14', '09:00:00', '09:30:00', 'Scheduled', 'In-Person'),
 (4, 4, 4, '2026-10-10', '11:00:00', '11:30:00', 'Completed', 'In-Person'),
 (5, 5, 5, '2026-10-11', '10:00:00', '10:30:00', 'Completed', 'Follow-up'),
 (6, 6, 6, '2026-10-12', '14:00:00', '14:30:00', 'Completed', 'In-Person'),
 (7, 1, 5, '2026-10-08', '08:30:00', '09:00:00', 'Completed', 'Emergency'),
-(8, 2, 1, '2026-10-19', '11:00:00', '11:30:00', 'Scheduled', 'Online/Telehealth');
+(8, 2, 1, '2026-10-19', '11:00:00', '11:30:00', 'Cancelled', 'Online/Telehealth'),
+(9, 5, 1, '2026-10-13', '12:27:00', '13:28:00', 'Scheduled', 'In-Person'),
+(10, 6, 1, '2026-10-13', '18:00:00', '10:30:00', 'Scheduled', 'In-Person'),
+(11, 7, 6, '2026-10-13', '15:00:00', '10:30:00', 'Scheduled', 'In-Person'),
+(12, 1, 1, '2026-11-20', '11:00:00', '11:30:00', 'Scheduled', 'In-Person'),
+(13, 1, 1, '2026-11-20', '14:00:00', '14:30:00', 'Completed', 'In-Person');
 
 -- 6. Medical History Data
 INSERT INTO medical_history (history_id, patient_id, doctor_id, record_date, conditions, diagnosis, treatment, notes) VALUES
@@ -258,7 +264,7 @@ INSERT INTO medical_history (history_id, patient_id, doctor_id, record_date, con
 
 -- 7. Medications Data
 INSERT INTO medications (medication_id, medicine_name, type, unit, price, stock_quantity) VALUES
-(1, 'Amlodipine Besylate 5mg', 'Tablet', '10 tablets', 45.00, 350),
+(1, 'Amlodipine Besylate 5mg', 'Tablet', '10 tablets', 45.00, 348),
 (2, 'Telmisartan 40mg', 'Tablet', '14 tablets', 110.00, 200),
 (3, 'Sumatriptan 50mg', 'Tablet', '4 tablets', 180.00, 85),
 (4, 'Montelukast & Levocetirizine', 'Tablet', '10 tablets', 125.00, 150),
@@ -285,7 +291,12 @@ INSERT INTO billing (bill_id, patient_id, appointment_id, bill_date, total_amoun
 (4, 4, 4, '2026-10-10', 1680.00, 'Paid', 'UPI'),
 (5, 5, 5, '2026-10-11', 720.00, 'Paid', 'Credit Card'),
 (6, 6, 6, '2026-10-12', 885.00, 'Paid', 'Cash'),
-(7, 1, 7, '2026-10-08', 1230.00, 'Paid', 'Insurance');
+(7, 1, 7, '2026-10-08', 1230.00, 'Paid', 'Insurance'),
+(8, 5, 9, '2026-10-13', 650.00, 'Pending', 'Pending'),
+(9, 6, 10, '2026-10-13', 800.00, 'Pending', 'Pending'),
+(10, 7, 11, '2026-10-13', 800.00, 'Pending', 'Pending'),
+(11, 1, 12, '2026-11-20', 700.00, 'Pending', 'Pending'),
+(12, 1, 13, '2026-11-20', 700.00, 'Paid', 'UPI');
 
 -- 10. Users Data (Login Credentials & Role Assignment)
 INSERT INTO users (user_id, username, password, role, doctor_id, patient_id, full_name, email) VALUES
@@ -301,7 +312,8 @@ INSERT INTO users (user_id, username, password, role, doctor_id, patient_id, ful
 (10, 'kabir.mehta', 'patient123', 'patient', NULL, 3, 'Kabir Mehta', 'kabir.mehta@example.com'),
 (11, 'meera.joshi', 'patient123', 'patient', NULL, 4, 'Meera Joshi', 'meera.joshi@example.com'),
 (12, 'arjun.reddy', 'patient123', 'patient', NULL, 5, 'Arjun Reddy', 'arjun.reddy@example.com'),
-(13, 'pooja.iyer', 'patient123', 'patient', NULL, 6, 'Pooja Iyer', 'pooja.iyer@example.com');
+(13, 'pooja.iyer', 'patient123', 'patient', NULL, 6, 'Pooja Iyer', 'pooja.iyer@example.com'),
+(14, 'harsh.aatha', 'patient123', 'patient', NULL, 7, 'Harsh Aatha', 'harshaat@gmail.com');
 
 -- =====================================================================
 -- SECTION 3: DATABASE VIEWS (UNIT 9)
